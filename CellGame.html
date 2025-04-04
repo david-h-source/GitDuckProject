@@ -1,0 +1,2397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="https://fonts.googleapis.com/css2?family=Short+Stack&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Gloria+Hallelujah&display=swap" rel="stylesheet">
+    <title>This Precious Town</title>
+    <style>
+        body {
+            font-family: 'Comic Neue', 'Patrick Hand', cursive;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            background: linear-gradient(to bottom, #0a0e2a 0%, #1a1a40 100%);
+        }
+        
+        .highlight-blacksmith {
+            border: 2px solid #f44336 !important;
+            box-shadow: 0 0 15px #f44336 !important;
+        }
+
+        .highlight-river {
+            border: 2px solid #00a8ff !important;
+            box-shadow: 0 0 15px #00a8ff !important;
+        }
+
+        .highlight-farmer {
+            border: 2px solid #4CAF50 !important;
+            box-shadow: 0 0 15px #4CAF50 !important;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 5s infinite steps(5);
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            20% { opacity: 0.8; }
+            40% { opacity: 0.3; }
+            60% { opacity: 1; }
+            80% { opacity: 0.5; }
+            100% { opacity: 0.2; }
+        }
+		
+		@keyframes simpleFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-10px); }
+}
+
+/* Add these new CSS rules */
+.energy-container, .tool-selection, .villager-counter {
+    opacity: 0;
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    transform: translateY(20px);
+}
+
+.energy-container.show, 
+.tool-selection.show, 
+.villager-counter.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@keyframes floatBounce {
+        0%, 100% {
+            transform: translateY(0) rotate(0deg);
+        }
+        25% {
+            transform: translateY(-15px) rotate(5deg);
+        }
+        50% {
+            transform: translateY(0) rotate(0deg);
+        }
+        75% {
+            transform: translateY(-10px) rotate(-3deg);
+        }
+    }
+        
+ /* Individual letter animation */
+    h1 span {
+        display: inline-block;
+        position: relative;
+        animation: floatBounce 9s ease infinite;
+        animation-delay: calc(var(--char-index) * 0.1s);
+        transform-origin: center bottom;
+    }
+
+@keyframes letterFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* Sparkle effects between letters */
+    h1 span:not(:last-child)::after {
+        content: "•";
+        position: absolute;
+        right: -12px;
+        color: rgba(255,255,255,0.5);
+        animation: sparklePulse 1.5s infinite alternate;
+        animation-delay: calc(var(--char-index) * 0.1s);
+    }
+
+    @keyframes sparklePulse {
+        0% { opacity: 0.2; transform: scale(0.8); }
+        100% { opacity: 0.8; transform: scale(1.2); }
+    }
+		
+		
+		h1 {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        margin-bottom: 20px;
+        text-align: center;
+        text-shadow: 
+            0 0 10px rgba(255,255,255,0.3),
+            0 0 20px #9c27b0,
+            0 0 30px #00a8ff;
+        z-index: 10;
+        /* Double the size */
+        font-size: 3.5rem; /* Increased from ~1.75rem */
+        font-weight: 700;
+        /* Cute font */
+        font-family: 'Gloria Hallelujah', 'Comic Neue', cursive;
+        /* Text effects */
+        background: linear-gradient(to right, #ff8a00, #e52e71);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: #390075;
+        padding: 0 30px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+        
+        .scene-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            margin: 0 auto;
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+        
+        .scene {
+            width: 100%;
+            height: 100%;
+            perspective: 1500px;
+        }
+        
+        .grid-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(50deg) rotateZ(45deg) translateZ(-950px) translateY(-30px) scale(3.6);
+            transition: transform 0.1s linear;
+        }
+        
+        .cell {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            pointer-events: auto;
+        }
+        
+        
+        .cell-face {
+    position: absolute;
+    backface-visibility: visible;
+    box-sizing: border-box;
+    border: 2px solid transparent;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    /* Ensure the face covers the entire cell */
+    width: 100%;
+    height: 100%;
+}
+
+.cell-front {
+    transform: translateZ(50px);
+    pointer-events: auto;
+    z-index: 2;
+    /* Force exact size and no repeat */
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+        
+        .cell-back {
+            width: 100%;
+            height: 100%;
+            transform: rotateY(180deg) translateZ(50px);
+            background: rgba(50, 50, 50, 0.7);
+            z-index: 1;
+        }
+        
+        .cell-right {
+            width: 100px;
+            height: 100px;
+            transform: rotateY(90deg) translateZ(50px) rotateZ(-90deg);
+			background-image: url('dirt_side.jpg');
+            right: 0;
+            display: none;
+            z-index: 0;
+        }
+        
+        .cell-bottom {
+            width: 100px;
+            height: 100px;
+            transform: rotateX(-90deg) translateZ(50px);
+            top: 0;
+            background-image: url('dirt_side.jpg');
+            display: none;
+            z-index: 0;
+        }
+        
+        .cell-top {
+            width: 100px;
+            height: 100px;
+            transform: rotateX(90deg) translateZ(50px);
+            bottom: 0;
+            background: rgba(70, 70, 70, 0.6);
+            z-index: 0;
+        }
+        
+        .cell-left {
+            width: 100px;
+            height: 100px;
+            transform: rotateY(-90deg) translateZ(50px);
+            left: 0;
+            background: rgba(60, 60, 60, 0.5);
+            z-index: 0;
+        }
+        
+        .cell:not(.empty) .cell-right,
+        .cell:not(.empty) .cell-bottom {
+            display: block;
+        }
+        
+        .cell.highlight .cell-front {
+            border: 2px solid white;
+            box-shadow: 0 0 15px white;
+        }
+        
+        .highlight-river .cell-front {
+            border: 2px solid #00a8ff;
+            box-shadow: 0 0 15px #00a8ff;
+        }
+        
+        .highlight-farmer .cell-front {
+            border: 2px solid #4CAF50;
+            box-shadow: 0 0 15px #4CAF50;
+        }
+        
+        .highlight-blacksmith .cell-front {
+            border: 2px solid #f44336;
+            box-shadow: 0 0 15px #f44336;
+        }
+        
+        .empty .cell-front {
+            background-color: rgba(248, 249, 250, 0.2);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none" stroke="%23ccc" stroke-width="1" stroke-dasharray="5,5"/></svg>');
+        }
+        
+/* Update all cell front textures to use exact fit */
+.dirt .cell-front { 
+    background-image: url('dirt.jpg');
+    background-size: 100% 100%;
+}
+.grass .cell-front { 
+    background-image: url('grass.jpg');
+    background-size: 100% 100%;
+}
+.puddle .cell-front { 
+    background-image: url('puddle.jpg');
+    background-size: 100% 100%;
+}
+.mountain .cell-front { 
+    background-image: url('mountain.jpg');
+    background-size: 100% 100%;
+}
+.village .cell-front { 
+    background-image: url('village.jpg');
+    background-size: 100% 100%;
+}
+.river_house .cell-front { 
+    background-image: url('river_house.jpg');
+    background-size: 100% 100%;
+}
+.farmer_house .cell-front { 
+    background-image: url('farmer_house.jpg');
+    background-size: 100% 100%;
+}
+.blacksmith_house .cell-front { 
+    background-image: url('blacksmith_house.jpg');
+    background-size: 100% 100%;
+}
+.castle .cell-front { 
+    background-image: url('castle.jpg');
+    background-size: 100% 100%;
+}
+
+.forest .cell-front { 
+    background-image: url('forest.jpg');
+    background-size: 100% 100%;
+}
+        
+        /* Sparkles */
+        .sparkle-container {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: gold;
+            box-shadow: 0 0 8px 1px gold;
+            animation: sparkle-fade 1s ease-out forwards;
+        }
+        
+        .blue-sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #00a8ff;
+            box-shadow: 0 0 8px 1px #00a8ff;
+            animation: sparkle-fade 2s ease-out forwards;
+        }
+        
+        .red-sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #ff3e3e;
+            box-shadow: 0 0 8px 1px #ff3e3e;
+            animation: sparkle-fade 2.5s ease-out forwards;
+        }
+        
+        @keyframes sparkle-fade {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+        
+        .villager, .boar {
+        position: absolute;
+        width: 60px;  /* Increased size */
+        height: 60px;
+        background-size: contain;
+        background-repeat: no-repeat;
+        z-index: 100;
+        pointer-events: none;
+        will-change: transform;
+        transition: transform 0.4s ease-out;
+    }
+    
+    .villager {
+        background-image: url('villager.gif');
+    }
+	
+	     /* Energy indicator */
+        .energy-container {
+            position: absolute;
+            top: 40px;
+            left: 60px;
+    display: flex; /* Change from none to flex (handled by opacity) */
+        }
+        
+        .energy {
+    display: inline-block;
+    width: 35px;
+    height: 35px;
+    background-color: #9c27b0;
+    border-radius: 50%;
+    margin-right: 5px;
+    box-shadow: 0 0 10px #9c27b0;
+    animation: pulse-energy 8s infinite ease-in-out;
+    transform-origin: center;
+}
+
+/* Different animation delays for each orb */
+.energy:nth-child(1) { animation-delay: 0s; }
+.energy:nth-child(2) { animation-delay: 0.8s; } /* Changed from 0.2s */
+.energy:nth-child(3) { animation-delay: 1.6s; } /* Changed from 0.4s */
+.energy:nth-child(4) { animation-delay: 2.4s; } /* Changed from 0.6s */
+.energy:nth-child(5) { animation-delay: 3.2s; } /* Changed from 0.8s */
+
+@keyframes pulse-energy {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 10px #9c27b0;
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 10px #9c27b0;
+    }
+}
+
+/* Update the existing energy rule for inactive orbs */
+.energy-container .energy[style*="opacity: 0.3"] {
+    animation: none;
+    opacity: 0.3 !important;
+    box-shadow: 0 0 5px rgba(156, 39, 176, 0.5);
+}
+	
+.villager-counter {
+    position: absolute;
+	font-family: 'Gloria Hallelujah', cursive;
+    top: 100px; /* Position below energy counter */
+    left: 20px;
+    display: flex;
+    align-items: center;
+    padding: 16px 30px; /* Double the padding */
+    color: white;
+    font-size: 36px; /* Double the font size */
+    font-weight: bold;
+    z-index: 100;
+}
+
+.villager-icon {
+    width: 60px; /* Double the size */
+    height: 60px;
+    margin-right: 20px; /* Increased spacing */
+    background-image: url('villager.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: 0 0 !important;
+    animation: none !important;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 4px rgba(0,0,0,0.5)); /* Stronger shadow */
+}
+
+#villagerCount {
+    min-width: 40px;
+    text-align: center;
+    text-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+    
+    .boar {
+        background-image: url('boar.gif');
+    }
+    
+    .moving-villager, .moving-boar {
+        animation: walk-animation 0.5s infinite steps(2);
+    }
+    
+    @keyframes walk-animation {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0); }
+    }
+	
+	.victory-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(2.5px); /* Reduced blur by half */
+}
+
+.victory-popup {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0.9));
+    padding: 30px;
+    border-radius: 60px;
+    text-align: center;
+    box-shadow: 0 0 30px gold, 0 0 60px rgba(255, 215, 0, 0.5);
+    max-width: 80%;
+    animation: pulse 2s infinite;
+    border: 3px solid white;
+	padding-bottom: 50px;
+}
+
+.victory-title {
+font-family: 'Gloria Hallelujah', 'Comic Neue', cursive;
+    font-size: 3em;
+    color: white;
+    text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+    margin-bottom: 20px;
+}
+
+.victory-message {
+font-family: 'Gloria Hallelujah', 'Comic Neue', cursive;
+    font-size: 1.5em;
+    color: white;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.confetti {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    opacity: 0.8;
+    z-index: 1001;
+    animation: confetti-fall 3s ease-out forwards;
+    /* Add some randomness to the falling path */
+    --tx: calc((0.5 - random()) * 200px);
+    --ty: 100vh;
+}
+
+@keyframes confetti-fall {
+    0% { 
+        transform: 
+            translateY(-100px) 
+            translateX(calc(-50px + (var(--tx) * 0.1)))
+            rotate(0deg) 
+            scale(1);
+        opacity: 1;
+    }
+    100% { 
+        transform: 
+            translateY(calc(100vh + 100px))
+            translateX(var(--tx))
+            rotate(720deg) 
+            scale(0.5);
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 30px gold; }
+    50% { transform: scale(1.05); box-shadow: 0 0 50px gold; }
+    100% { transform: scale(1); box-shadow: 0 0 30px gold; }
+}
+
+        
+        .controls {
+		font-family: 'Gloria Hallelujah', 'Comic Neue', cursive;
+    letter-spacing: 1px
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            background-color: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+        
+   
+        
+        /* Tool selection */
+     .tool-selection {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+        .tool-btn {
+    width: 150px;
+    height: 150px;
+    border-radius: 15px;
+    border: 3px solid transparent;
+    cursor: pointer;
+    margin-right: 10px;
+    margin-top: 10px;
+    /* Updated background properties */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Prevent image distortion */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+	transition: all 0.5s ease, opacity 0.8s ease 0.3s;
+    opacity: 0;
+}
+
+/* Energy cost indicator styles */
+.tool-cost {
+    position: absolute;
+    left: -80px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    align-items: center;
+    justify-content: flex-end;
+    width: 60px;
+}
+
+.tool-btn:hover .tool-cost {
+    display: flex;
+}
+
+.energy-cost {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: #9c27b0;
+    margin-left: 3px;
+    box-shadow: 0 0 5px #9c27b0;
+    opacity: 0.8;
+}
+
+.tool-btn.show {
+    opacity: 1;
+}
+
+// Add this CSS for spawn effect:
+.cell.boar-spawning .cell-front {
+    animation: boar-spawn-pulse 1s ease-out;
+}
+
+@keyframes boar-spawn-pulse {
+    0% { box-shadow: 0 0 5px rgba(255,165,0,0); }
+    50% { box-shadow: 0 0 20px rgba(255,165,0,0.8); }
+    100% { box-shadow: 0 0 5px rgba(255,165,0,0); }
+}
+
+
+        .tool-btn:hover {
+            transform: scale(1.2);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            z-index: 20;
+        }
+
+        .tool-btn.active {
+            border-color: #ffeb3b;
+            box-shadow: 0 0 30px #ffeb3b;
+        }
+
+        .tool-btn[disabled] {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+            filter: grayscale(50%);
+        }
+        
+        /* Specific tool buttons - ensure they use cover sizing */
+#dirt-tool { 
+    background-image: url('dirt.jpg');
+    background-size: cover;
+}
+.tool-btn.house-tool {
+    display: none; /* Hide house tools by default */
+}
+#mountain-tool { 
+    background-image: url('mountain.jpg');
+    background-size: cover;
+}
+#river-house-tool { 
+    background-image: url('river_house.jpg');
+    background-size: cover;
+}
+#farmer-house-tool { 
+    background-image: url('farmer_house.jpg');
+    background-size: cover;
+}
+#blacksmith-house-tool { 
+    background-image: url('blacksmith_house.jpg');
+    background-size: cover;
+}
+
+// Updated CSS for spawn effects
+.cell.boar-spawn-warning .cell-front {
+    animation: spawn-warning-pulse 0.5s infinite alternate;
+}
+
+.cell.boar-spawning .cell-front {
+    animation: boar-spawn-flash 0.2s 5;
+}
+
+@keyframes spawn-warning-pulse {
+    0% { box-shadow: 0 0 5px orange; }
+    100% { box-shadow: 0 0 20px red; }
+}
+
+@keyframes boar-spawn-flash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.5); }
+}
+
+/* Add these styles to your existing CSS */
+.house-tool {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    display: block !important; /* Force display block */
+    visibility: hidden;
+}
+
+.house-tool.show {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+/* Add a slight delay between each tool appearing */
+.house-tool:nth-child(1).show { transition-delay: 0.3s; }
+.house-tool:nth-child(2).show { transition-delay: 0.6s; }
+.house-tool:nth-child(3).show { transition-delay: 0.9s; }
+
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+<h1 id="gameTitle"></h1>
+	
+<div class="villager-counter">
+    <div class="villager-icon"></div>
+    <span id="villagerCount">100</span>
+</div>
+    
+    <div class="energy-container" id="energyContainer">
+        <div class="energy"></div>
+        <div class="energy"></div>
+        <div class="energy"></div>
+        <div class="energy"></div>
+        <div class="energy"></div>
+    </div>
+    
+<div class="tool-selection">
+    <div class="tool-btn" id="dirt-tool" title="Dirt (Costs 0 Energy)">
+        <div class="tool-cost"></div>
+    </div>
+    <div class="tool-btn" id="mountain-tool" title="Mountain (Costs 1 Energy)">
+        <div class="tool-cost">
+            <div class="energy-cost"></div>
+        </div>
+    </div>
+
+    <div class="tool-btn house-tool" id="farmer-house-tool" title="Farmer House (Costs 2 Energy)">
+        <div class="tool-cost">
+            <div class="energy-cost"></div>
+            <div class="energy-cost"></div>
+        </div>
+    </div>
+	    <div class="tool-btn house-tool" id="river-house-tool" title="River House (Costs 2 Energy)">
+        <div class="tool-cost">
+            <div class="energy-cost"></div>
+            <div class="energy-cost"></div>
+        </div>
+    </div>
+    <div class="tool-btn house-tool" id="blacksmith-house-tool" title="Blacksmith House (Costs 2 Energy)">
+        <div class="tool-cost">
+            <div class="energy-cost"></div>
+            <div class="energy-cost"></div>
+        </div>
+    </div>
+</div>
+    
+    <div class="scene-container" id="sceneContainer">
+        <div class="scene">
+            <div class="grid-3d" id="grid3d"></div>
+        </div>
+    </div>
+    
+    <audio id="bellSound1" preload="auto"><source src="bell1.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound2" preload="auto"><source src="bell2.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound3" preload="auto"><source src="bell3.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound4" preload="auto"><source src="bell4.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound5" preload="auto"><source src="bell5.mp3" type="audio/mpeg"></audio>
+    <audio id="villagerSound" preload="auto"><source src="villager.mp3" type="audio/mpeg"></audio>
+	<audio id="dirtSound" preload="auto"><source src="dirt.mp3" type="audio/mpeg"></audio>
+	<audio id="boarSound" preload="auto"><source src="boar.mp3" type="audio/mpeg"></audio>
+	
+	<audio id="ambientSound" preload="auto" loop>
+    <source src="ambient.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Split title into animated letters
+        const titleText = "This Precious Town";
+        const titleElement = document.getElementById('gameTitle');
+        
+        titleElement.innerHTML = titleText.split('').map((char, i) => 
+            char === ' ' 
+                ? '<span class="space" style="--char-index:'+i+'">&nbsp;</span>'
+                : '<span style="--char-index:'+i+'">'+char+'</span>'
+        ).join('');
+        
+        // Add extra space between words
+        const spaces = titleElement.querySelectorAll('.space');
+        spaces.forEach(space => {
+            space.style.padding = '0 8px'; // Adjust spacing between words
+        });
+    });
+
+</script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create starry background
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.width = `${1 + Math.random() * 2}px`;
+                star.style.height = star.style.width;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                starsContainer.appendChild(star);
+            }
+
+            // Game elements
+            const grid3d = document.getElementById('grid3d');
+            const sceneContainer = document.getElementById('sceneContainer');
+            const energyContainer = document.getElementById('energyContainer');
+            const toolSelection = document.querySelector('.tool-selection');
+            const dirtTool = document.getElementById('dirt-tool');
+            const mountainTool = document.getElementById('mountain-tool');
+            const riverHouseTool = document.getElementById('river-house-tool');
+            const farmerHouseTool = document.getElementById('farmer-house-tool');
+            const blacksmithHouseTool = document.getElementById('blacksmith-house-tool');
+            
+            // Game settings
+            let size = 5;
+            const spacing = 110;
+            let cells = [];
+            let lastClickedIndex = null;
+            let currentTool = 'dirt';
+            let energy = 5;
+			
+			// Add these with your other game variables
+const maxVillagersPerHouse = {
+    farmer: 34,
+    river: 33,
+    blacksmith: 33
+};
+let spawnedVillagers = {
+    farmer: 0,
+    river: 0,
+    blacksmith: 0
+};
+			
+			let boarMovementCount = 0;
+			// Start ambient sound at 50% volume
+const ambientSound = document.getElementById('ambientSound');
+ambientSound.volume = 0.5;
+ambientSound.play().catch(e => console.log("Audio play failed:", e));
+            
+            // Camera controls
+            let isRotating = false;
+            let startX, startY;
+            let rotationX = 60;
+            let rotationZ = 45;
+            let zoomLevel = 2.2; // Increased from 1.8 to 2.2
+            let translateY = -30; // Adjusted from -50 to -30
+            const minZoom = 2.0;
+            const maxZoom = 2.8; // Increased from 2.5 to 2.8
+            const minRotationZ = 0;
+            const maxRotationZ = 90;
+			
+			// Game state variables
+let villagersReached = {
+    farmer: 0,
+    river: 0,
+    blacksmith: 0
+};
+const maxBoars = 2;
+let currentBoars = 0;
+let boarInterval;
+let villagersRemaining = 100;
+let lastMilestone = 100; // Track the last milestone we triggered
+let boarSpawnForestIndex = null; // Will store the fixed forest tile index for boar spawning
+const boarSpawnInterval = 60000; // 15 seconds between boar spawns
+let lastBoarForestIndex = null; // Track last spawn location
+let isBoarSpawning = false; // Track if a boar is currently spawning
+
+            
+            // Audio
+            let currentSound = null;
+            
+            // Villager management system
+            const villagers = new Map();
+            let movementCheckInterval;
+			updateVillagerCounter();
+			
+			document.addEventListener('DOMContentLoaded', function() {
+    // Initialize house tools as hidden
+    document.querySelectorAll('.house-tool').forEach(tool => {
+        tool.style.opacity = '0';
+        tool.style.transform = 'translateY(20px)';
+        tool.style.visibility = 'hidden';
+    });
+});
+
+// Updated villager positioning functions
+function positionVillagerOnHouse(villager, cell) {
+    // Get cell's position in 3D space
+    const cellRect = cell.getBoundingClientRect();
+    const sceneRect = sceneContainer.getBoundingClientRect();
+    
+    // Calculate center position accounting for perspective
+    const x = cellRect.left - sceneRect.left + cellRect.width/2 - 15;
+    const y = cellRect.top - sceneRect.top + cellRect.height/2 - 30; // Adjust for villager height
+    
+    // Position the villager (without any 3D transforms)
+    villager.style.left = `${x}px`;
+    villager.style.top = `${y}px`;
+    villager.style.transform = 'none'; // Remove any transforms
+    
+    // Make sure the villager is in the correct container
+    if (!villager.parentNode || villager.parentNode !== sceneContainer) {
+        sceneContainer.appendChild(villager);
+    }
+}
+
+// Replace your existing updateVillagerCounter function with this:
+function updateVillagerCounter() {
+    // Prevent counter from going below zero
+    villagersRemaining = Math.max(0, villagersRemaining);
+    document.getElementById('villagerCount').textContent = villagersRemaining;
+    
+    // Check for milestone sounds (every 10 villagers)
+    if (villagersRemaining <= lastMilestone - 10 || villagersRemaining === 10) {
+        playMilestoneSound(villagersRemaining);
+        lastMilestone = villagersRemaining;
+    }
+    
+    if (villagersRemaining <= 0) {
+        checkVictory();
+    }
+}
+
+// Add this new function to handle the milestone effects
+function playMilestoneSound(currentCount) {
+    // Only play for counts divisible by 10 (100, 90, 80...10)
+    if (currentCount % 10 === 0) {
+        const villagerSound = document.getElementById('villagerSound');
+        villagerSound.currentTime = 0;
+        villagerSound.play();
+        
+        // Visual feedback
+        const counter = document.querySelector('.villager-counter');
+        counter.style.transform = 'scale(1.1)';
+        counter.style.color = '#ffeb3b';
+        
+        // Create sparkles
+        createCounterSparkles();
+        
+        // Reset animation after short delay
+        setTimeout(() => {
+            counter.style.transform = 'scale(1)';
+            counter.style.color = 'white';
+        }, 300);
+    }
+}
+
+// Add this function to create sparkle effects
+function createCounterSparkles() {
+    const counter = document.querySelector('.villager-counter');
+    const sparkleContainer = document.createElement('div');
+    sparkleContainer.className = 'sparkle-container';
+    sparkleContainer.style.position = 'absolute';
+    sparkleContainer.style.width = '100%';
+    sparkleContainer.style.height = '100%';
+    sparkleContainer.style.pointerEvents = 'none';
+    
+    // Create 15 sparkles
+    for (let i = 0; i < 15; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.position = 'absolute';
+        sparkle.style.width = '6px';
+        sparkle.style.height = '6px';
+        sparkle.style.backgroundColor = '#ffeb3b';
+        sparkle.style.borderRadius = '50%';
+        sparkle.style.boxShadow = '0 0 8px 1px #ffeb3b';
+        sparkle.style.left = `${Math.random() * 100}%`;
+        sparkle.style.top = `${Math.random() * 100}%`;
+        
+        // Animate each sparkle differently
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 20 + Math.random() * 30;
+        sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+        sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+        sparkle.style.animation = `sparkle-fade 1s ease-out forwards`;
+        sparkle.style.animationDelay = `${Math.random() * 0.5}s`;
+        
+        sparkleContainer.appendChild(sparkle);
+    }
+    
+    counter.appendChild(sparkleContainer);
+    setTimeout(() => sparkleContainer.remove(), 1000);
+}
+
+// Handle autoplay restrictions
+function startAmbientSound() {
+    const playPromise = ambientSound.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            // Autoplay was prevented - wait for user interaction
+            document.body.addEventListener('click', function enableSound() {
+                ambientSound.play();
+                document.body.removeEventListener('click', enableSound);
+            }, { once: true });
+        });
+    }
+}
+
+startAmbientSound();
+
+// Modified createVillagerForHouse to allow sound overlapping
+    function createVillagerForHouse(houseIndex) {
+        const cell = cells[houseIndex];
+        if (!cell) return null;
+        
+        const villager = document.createElement('div');
+        villager.className = 'villager';
+        positionEntityOnCell(villager, cell);
+        
+        const sound = document.getElementById('villagerSound').cloneNode();
+        sound.play();
+        
+        return villager;
+    }
+	
+	function updateToolCostIndicators() {
+    document.querySelectorAll('.tool-btn').forEach(tool => {
+        const costIndicator = tool.querySelector('.tool-cost');
+        if (!costIndicator) return;
+        
+        const energyCosts = costIndicator.querySelectorAll('.energy-cost');
+        energyCosts.forEach((costDot, index) => {
+            // Make dots pulse if player has enough energy
+            if (index < energy) {
+                costDot.style.animation = 'pulse-energy 2s infinite ease-in-out';
+                costDot.style.opacity = '0.9';
+            } else {
+                costDot.style.animation = 'none';
+                costDot.style.opacity = '0.3';
+            }
+        });
+    });
+}
+
+
+// Modified findPathToCastle function to include house-specific path requirements
+    function findPathToCastle(startIndex) {
+        const castleIndex = cells.findIndex(cell => cell && cell.dataset.state === 'castle');
+        if (castleIndex === -1) return null;
+        
+        const startCell = cells[startIndex];
+        const startRow = parseInt(startCell.dataset.row);
+        const startCol = parseInt(startCell.dataset.col);
+        const houseType = startCell.dataset.state.split('_')[0]; // "farmer", "river", or "blacksmith"
+        
+        const castleRow = parseInt(cells[castleIndex].dataset.row);
+        const castleCol = parseInt(cells[castleIndex].dataset.col);
+        
+        // BFS algorithm with house-specific requirements
+        const queue = [[startRow, startCol, []]];
+        const visited = new Set();
+        visited.add(`${startRow},${startCol}`);
+        
+        const directions = [
+            {row: -1, col: 0}, // up
+            {row: 1, col: 0},  // down
+            {row: 0, col: -1}, // left
+            {row: 0, col: 1}    // right
+        ];
+        
+        while (queue.length > 0) {
+            const [currentRow, currentCol, path] = queue.shift();
+            const currentIndex = currentRow * size + currentCol;
+            
+            if (currentRow === castleRow && currentCol === castleCol) {
+                return path.concat([currentIndex]);
+            }
+            
+            for (const dir of directions) {
+                const newRow = currentRow + dir.row;
+                const newCol = currentCol + dir.col;
+                const newIndex = newRow * size + newCol;
+                
+                if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                    const cell = cells[newIndex];
+                    
+                    // Skip if cell is invalid for pathfinding
+                    if (!cell || 
+                        cell.dataset.state === 'empty' || 
+                        cell.dataset.state === 'forest' ||
+                        cell.dataset.state.endsWith('_house')) {
+                        continue;
+                    }
+                    
+                    // House-specific path requirements
+                    if (path.length === 0) { // First step from house
+                        let isValidFirstStep = false;
+                        switch(houseType) {
+                            case 'farmer':
+                                isValidFirstStep = (cell.dataset.state === 'grass');
+                                break;
+                            case 'river':
+                                isValidFirstStep = (cell.dataset.state === 'puddle');
+                                break;
+                            case 'blacksmith':
+                                isValidFirstStep = (cell.dataset.state === 'mountain');
+                                break;
+                        }
+                        if (!isValidFirstStep) continue;
+                    }
+                    
+                    if (!visited.has(`${newRow},${newCol}`)) {
+                        visited.add(`${newRow},${newCol}`);
+                        queue.push([newRow, newCol, path.concat([currentIndex])]);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+	
+	function updateHouseVisuals() {
+    cells.forEach(cell => {
+        if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
+            const houseType = cell.dataset.state.split('_')[0];
+            if (spawnedVillagers[houseType] >= maxVillagersPerHouse[houseType]) {
+                // Add a "disabled" visual effect
+                cell.style.filter = 'grayscale(80%) brightness(0.7)';
+                cell.style.pointerEvents = 'none';
+            } else {
+                // Reset visual if not at limit
+                cell.style.filter = '';
+                cell.style.pointerEvents = '';
+            }
+        }
+    });
+}
+	
+function checkVictory() {
+    // Check if all victory conditions are met
+    if (villagersRemaining <= 0 && 
+        spawnedVillagers.farmer >= maxVillagersPerHouse.farmer && 
+        spawnedVillagers.river >= maxVillagersPerHouse.river && 
+        spawnedVillagers.blacksmith >= maxVillagersPerHouse.blacksmith) {
+		
+        
+        // Stop all game loops
+        clearInterval(movementCheckInterval);
+        clearInterval(boarInterval);
+		
+		// Stop all active villagers
+        document.querySelectorAll('.villager').forEach(villager => {
+            villager.style.animation = 'none';
+            villager.style.transition = 'none';
+        });
+        
+        // Stop all active boars
+        document.querySelectorAll('.boar').forEach(boar => {
+            boar.style.animation = 'none';
+            boar.style.transition = 'none';
+        });
+        
+        // Only create victory screen if it doesn't already exist
+        if (!document.querySelector('.victory-overlay')) {
+            // Create victory overlay
+            const victoryOverlay = document.createElement('div');
+            victoryOverlay.className = 'victory-overlay';
+            
+            // Create victory popup
+            const victoryPopup = document.createElement('div');
+            victoryPopup.className = 'victory-popup';
+            
+            // Create title
+            const victoryTitle = document.createElement('h1');
+            victoryTitle.className = 'victory-title';
+            victoryTitle.textContent = 'Victory!';
+            
+            // Create message
+            const victoryMessage = document.createElement('div');
+            victoryMessage.className = 'victory-message';
+            victoryMessage.textContent = 'Your town has flourished! All villagers have reached the castle.';
+            
+            // Assemble the popup
+            victoryPopup.appendChild(victoryTitle);
+            victoryPopup.appendChild(victoryMessage);
+            victoryOverlay.appendChild(victoryPopup);
+            
+            // Add to document
+            document.body.appendChild(victoryOverlay);
+            
+            // Play sounds
+            const yaySound = new Audio('yay.mp3');
+            //yaySound.play();
+            
+            // Start fireworks sound and confetti on loop
+            const fireworksSound = new Audio('fireworks.mp3');
+            fireworksSound.loop = true;
+            fireworksSound.play();
+            
+            // Create initial confetti
+            createConfetti();
+            
+            // Continue creating confetti periodically
+            const confettiInterval = setInterval(createConfetti, 3000);
+            
+            // Store interval reference so we could clear it if needed
+            victoryOverlay.dataset.confettiInterval = confettiInterval;
+        }
+    }
+}
+
+<!-- Update the createConfetti function to: -->
+function createConfetti() {
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', 
+                   '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', 
+                   '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
+    
+    // Create confetti directly on the body
+    for (let i = 0; i < 150; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.position = 'fixed';
+        confetti.style.left = `${Math.random() * 100}vw`;
+        confetti.style.top = `-20px`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Random movement properties
+        const tx = (Math.random() - 0.5) * 200;
+        const ty = window.innerHeight + 100;
+        const rotation = Math.random() * 360;
+        const duration = 2 + Math.random() * 3;
+        const size = 8 + Math.random() * 8;
+        
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        confetti.style.setProperty('--tx', `${tx}px`);
+        confetti.style.setProperty('--ty', `${ty}px`);
+        confetti.style.animationDuration = `${duration}s`;
+        confetti.style.animationDelay = `${Math.random()}s`;
+        
+        document.body.appendChild(confetti);
+        
+        // Remove after animation completes
+        setTimeout(() => {
+            if (confetti.parentNode) {
+                confetti.parentNode.removeChild(confetti);
+            }
+        }, duration * 1000);
+    }
+}
+
+function moveVillager(villager, path) {  
+    if (!path || path.length === 0) return;  
+
+    // Set initial position to the center of the starting cell  
+    const startCell = cells[path[0]];  
+    const sceneRect = sceneContainer.getBoundingClientRect();  
+    const startCellRect = startCell.getBoundingClientRect();  
+    const startX = startCellRect.left - sceneRect.left + startCellRect.width/2 - 15; // Center X  
+    const startY = startCellRect.top - sceneRect.top + startCellRect.height/2 - 15; // Center Y  
+    villager.style.left = `${startX}px`;  
+    villager.style.top = `${startY}px`;  
+
+    // Animation setup  
+    villager.classList.remove('moving-villager');  
+    void villager.offsetWidth; // Trigger reflow  
+    villager.classList.add('moving-villager');  
+
+    const DURATION = 400; // Duration per cell in milliseconds  
+    const STEPS = 60; // Number of animation steps  
+    const STEP_DURATION = DURATION / STEPS;  
+
+    let currentStep = 0;  
+    let currentCellIndex = 0;  
+    let startXPos = startX;  
+    let startYPos = startY;  
+    let targetX, targetY;  
+
+    // Initialize target position  
+    const initializeTargetPosition = (cellIndex) => {  
+        const nextCell = cells[path[cellIndex + 1]];  
+        const sceneRect = sceneContainer.getBoundingClientRect();  
+        const nextCellRect = nextCell.getBoundingClientRect();  
+        targetX = nextCellRect.left - sceneRect.left + nextCellRect.width/2 - 15;  
+        targetY = nextCellRect.top - sceneRect.top + nextCellRect.height/2 - 15;  
+    };  
+
+    // Initialize first target position  
+    initializeTargetPosition(currentCellIndex);  
+
+    // Animation loop using requestAnimationFrame  
+    function animate() {  
+        if (currentStep >= STEPS) {  
+            // Move to next cell  
+            currentCellIndex++;  
+            currentStep = 0;  
+
+            if (currentCellIndex >= path.length - 1) {  
+                // Stop animation and clean up  
+                villager.classList.remove('moving-villager');  
+                setTimeout(() => {  
+                    if (villager.parentNode) {  
+                        villager.parentNode.removeChild(villager);  
+                    }  
+                }, 300);  
+                return;  
+            }  
+
+            // Update start position to current position  
+            startXPos = parseFloat(villager.style.left);  
+            startYPos = parseFloat(villager.style.top);  
+            initializeTargetPosition(currentCellIndex);  
+        }  
+
+        // Calculate intermediate position (ease-in-out curve)  
+        const progress = currentStep / STEPS;  
+        const easedProgress = progress < 0.5   
+            ? 2 * progress * progress   
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;  
+
+        const currentX = startXPos + (targetX - startXPos) * easedProgress;  
+        const currentY = startYPos + (targetY - startYPos) * easedProgress;  
+
+        // Update position  
+        villager.style.left = `${currentX}px`;  
+        villager.style.top = `${currentY}px`;  
+
+        currentStep++;  
+        requestAnimationFrame(animate);  
+    }  
+
+    // Start animation  
+    requestAnimationFrame(animate);  
+}  
+
+       // Update checkAndMoveVillagers to use new movement system
+function checkAndMoveVillagers() {
+    // Don't move villagers if game is won
+    if (villagersRemaining <= 0) return;
+
+    const castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
+    if (!castleExists) return;
+
+    cells.forEach((cell, index) => {
+        if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
+            const houseType = cell.dataset.state.split('_')[0]; // "farmer", "river", or "blacksmith"
+            
+            // Check if we've reached the limit for this house type
+            if (spawnedVillagers[houseType] >= maxVillagersPerHouse[houseType]) {
+                return; // Skip this house if limit reached
+            }
+
+            if (!villagers.has(index)) {
+                const villager = createVillagerForHouse(index);
+                if (villager) {
+                    villagers.set(index, villager);
+                    spawnedVillagers[houseType]++; // Increment counter for this house type
+                }
+            }
+            
+            const villager = villagers.get(index);
+            if (villager && !villager.isMoving) {
+                const path = findPathToCastle(index);
+                if (path && path.length > 0) {
+                    villager.isMoving = true;
+                    setTimeout(() => {
+                        moveEntity(villager, path, 'villager');
+                        villagers.delete(index);
+                    }, 1000);
+                }
+            }
+        }
+    });
+	
+	updateHouseVisuals();
+}
+
+// Updated villager positioning and movement
+function positionEntityOnCell(entity, cell) {
+    const cellRect = cell.getBoundingClientRect();
+    const sceneRect = sceneContainer.getBoundingClientRect();
+    
+    const x = cellRect.left - sceneRect.left + cellRect.width/2 - 30; // Adjusted for new size
+    const y = cellRect.top - sceneRect.top + cellRect.height/2 - 45; // Adjusted for new size
+    
+    entity.style.left = `${x}px`;
+    entity.style.top = `${y}px`;
+    
+    if (!entity.parentNode || entity.parentNode !== sceneContainer) {
+        sceneContainer.appendChild(entity);
+    }
+}
+
+function moveEntity(entity, path, type) {  
+    if (!path || path.length === 0 || villagersRemaining <= 0) return;  
+
+    // Get the scene container's bounding rectangle  
+    const sceneRect = sceneContainer.getBoundingClientRect();  
+    
+    // Set initial position  
+    positionEntityOnCell(entity, cells[path[0]]);  
+    
+    // Calculate initial position coordinates  
+    const sceneLeft = sceneRect.left;  
+    const sceneTop = sceneRect.top;  
+    
+    // Get the villager's current position  
+    let startX = parseFloat(entity.style.left);  
+    let startY = parseFloat(entity.style.top);  
+    
+    // Get the target position for the first cell  
+    const firstCell = cells[path[0]];  
+    const firstCellRect = firstCell.getBoundingClientRect();  
+    // Calculate center coordinates for the first cell  
+    const targetX = firstCellRect.left - sceneLeft + firstCellRect.width/2 - 30;  
+    const targetY = firstCellRect.top - sceneTop + firstCellRect.height/2 - 45;  
+    
+    // Set up CSS transition for smooth animation  
+    entity.style.transition = `transform ${800}ms cubic-bezier(0.4, 0, 0.2, 1)`;  
+    
+    // Apply the initial movement  
+    entity.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px)`;  
+    
+    let currentIndex = 0;  
+    const moveSpeed = type === 'villager' ? 800 : 2000;  
+    
+    const moveNext = () => {  
+        if (currentIndex >= path.length - 1 || villagersRemaining <= 0) {  
+            if (type === 'villager' && villagersRemaining > 0) {  
+                // Count villagers reaching castle  
+                const houseType = cells[path[0]].dataset.state.split('_')[0];  
+                villagersReached[houseType]++;  
+				// Decrement remaining villagers
+            villagersRemaining--;
+            updateVillagerCounter();
+			 // Only check victory when counter reaches 0
+            if (villagersRemaining <= 0) {
+                checkVictory();  
+            }
+            }  
+            
+            // Remove transition and clean up  
+            entity.style.transition = 'none';  
+            entity.addEventListener('transitionend', () => {  
+                if (entity.parentNode) entity.parentNode.removeChild(entity);  
+                if (type === 'boar') currentBoars--;  
+            });  
+            
+            return;  
+        }  
+        
+        currentIndex++;  
+        const nextCell = cells[path[currentIndex]];  
+        const nextCellRect = nextCell.getBoundingClientRect();  
+        // Calculate center coordinates for the next cell  
+        const nextTargetX = nextCellRect.left - sceneLeft + nextCellRect.width/2 - 40;  
+        const nextTargetY = nextCellRect.top - sceneTop + nextCellRect.height/2 - 60;  
+        
+        // Update the transformation  
+        entity.style.transform = `translate(${nextTargetX - startX}px, ${nextTargetY - startY}px)`;  
+        
+        // Start next movement after current animation  
+        setTimeout(moveNext, moveSpeed);  
+    };  
+    
+    // Start moving after a short delay to ensure initial position is set  
+    setTimeout(moveNext, 50);  
+}    
+
+// Update your boar initialization:
+function startBoarSpawning() {
+    if (!boarInterval) {
+        // Initial spawn with delay
+        setTimeout(spawnBoar, 1000);
+        // Set interval for subsequent spawns
+        boarInterval = setInterval(spawnBoar, boarSpawnInterval);
+    }
+}
+
+// Modified spawnBoar function
+function spawnBoar() {
+    if (currentBoars >= maxBoars || isBoarSpawning) return;
+    
+    isBoarSpawning = true;
+    
+    // Get all forest cells excluding last used one
+    const availableForests = cells.filter((cell, index) => 
+        cell && 
+        cell.dataset.state === 'forest' && 
+        index !== lastBoarForestIndex
+    );
+    
+    if (availableForests.length === 0) {
+        isBoarSpawning = false;
+        return;
+    }
+    
+    // Random selection with visual preview
+    const spawnCell = availableForests[Math.floor(Math.random() * availableForests.length)];
+    const spawnIndex = parseInt(spawnCell.dataset.index);
+    lastBoarForestIndex = spawnIndex;
+    
+    // Visual spawn preparation (3 second warning)
+    spawnCell.classList.add('boar-spawn-warning');
+    
+    setTimeout(() => {
+        spawnCell.classList.remove('boar-spawn-warning');
+        spawnCell.classList.add('boar-spawning');
+        
+        // Create boar after warning
+        const boar = document.createElement('div');
+        boar.className = 'boar';
+        
+        // Position boar
+        const cellRect = spawnCell.getBoundingClientRect();
+        const sceneRect = sceneContainer.getBoundingClientRect();
+        const x = cellRect.left - sceneRect.left + cellRect.width/2 - 30;
+        const y = cellRect.top - sceneRect.top + cellRect.height/2 - 45;
+        
+        boar.style.left = `${x}px`;
+        boar.style.top = `${y}px`;
+        sceneContainer.appendChild(boar);
+        
+        currentBoars++;
+        
+        // Play sounds
+        const warningSound = document.getElementById('bellSound1');
+        warningSound.currentTime = 0;
+        warningSound.play();
+        
+        setTimeout(() => {
+            const boarSound = document.getElementById('boarSound');
+            boarSound.currentTime = 0;
+            boarSound.play();
+        }, 300);
+        
+        // Start wandering
+        setTimeout(() => {
+            spawnCell.classList.remove('boar-spawning');
+            wanderBoar(boar, spawnIndex);
+            isBoarSpawning = false;
+        }, 1000);
+        
+    }, 3000); // 3 second warning before spawn
+}
+    
+// Update the moveBoar function to include longer delay
+function moveBoar(boar, fromIndex, toIndex) {
+    const fromCell = cells[fromIndex];
+    const toCell = cells[toIndex];
+    
+    // Calculate positions
+    const fromRect = fromCell.getBoundingClientRect();
+    const toRect = toCell.getBoundingClientRect();
+    const sceneRect = sceneContainer.getBoundingClientRect();
+    
+    const startX = fromRect.left - sceneRect.left + fromRect.width/2 - 30;
+    const startY = fromRect.top - sceneRect.top + fromRect.height/2 - 45;
+    const endX = toRect.left - sceneRect.left + toRect.width/2 - 30;
+    const endY = toRect.top - sceneRect.top + toRect.height/2 - 45;
+    
+    // Set initial position
+    boar.style.left = `${startX}px`;
+    boar.style.top = `${startY}px`;
+    
+    // Start animation
+    boar.classList.remove('moving-boar');
+    void boar.offsetWidth;
+    boar.classList.add('moving-boar');
+    
+    // Animate movement
+    boar.style.transition = 'left 2s ease-out, top 2s ease-out';
+    boar.style.left = `${endX}px`;
+    boar.style.top = `${endY}px`;
+    
+    // Continue wandering after movement completes with 3x longer delay
+    setTimeout(() => {
+        boar.classList.remove('moving-boar');
+        if (boar.parentNode) {
+            const currentCell = cells[toIndex];
+            // Ensure the cell is dirt and play sound if we convert it
+            if (currentCell.dataset.state === 'empty') {
+                currentCell.className = 'cell dirt';
+                currentCell.dataset.state = 'dirt';
+                const boarSound = document.getElementById('boarSound');
+                boarSound.currentTime = 0;
+                boarSound.play();
+            }
+            setTimeout(() => wanderBoar(boar, toIndex), 9000);
+        }
+    }, 2000);
+	
+	
+}
+
+function wanderBoar(boar, currentIndex) {
+
+// Don't move boars if game is won
+    if (villagersRemaining <= 0) {
+        if (boar.parentNode) boar.parentNode.removeChild(boar);
+        currentBoars--;
+        return;
+    }
+
+    const directions = [
+        {row: -1, col: 0}, {row: 1, col: 0},
+        {row: 0, col: -1}, {row: 0, col: 1}
+    ];
+    
+    const currentRow = parseInt(cells[currentIndex].dataset.row);
+    const currentCol = parseInt(cells[currentIndex].dataset.col);
+    const isEdgeBoar = (currentRow === 5 || currentCol === 5);
+    
+    const validMoves = [];
+    for (const dir of directions) {
+        const newRow = currentRow + dir.row;
+        const newCol = currentCol + dir.col;
+        
+        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+            const newIndex = newRow * size + newCol;
+            const cell = cells[newIndex];
+            const state = cell.dataset.state;
+            
+            if (isEdgeBoar && state === 'forest') {
+                validMoves.push(newIndex);
+            }
+            else if (['empty', 'dirt', 'grass', 'puddle'].includes(state)) {
+                validMoves.push(newIndex);
+            }
+        }
+    }
+    
+    if (validMoves.length === 0) {
+        setTimeout(() => wanderBoar(boar, currentIndex), 9000);
+        return;
+    }
+    
+    const nextIndex = validMoves[Math.floor(Math.random() * validMoves.length)];
+    const nextCell = cells[nextIndex];
+    
+    // Store original state before any changes
+    const originalState = nextCell.dataset.state;
+    
+    // Downgrade terrain if not forest
+    if (nextCell.dataset.state !== 'forest') {
+        switch(nextCell.dataset.state) {
+            case 'puddle':
+                nextCell.className = 'cell grass';
+                nextCell.dataset.state = 'grass';
+                break;
+            case 'grass':
+                nextCell.className = 'cell dirt';
+                nextCell.dataset.state = 'dirt';
+                break;
+            case 'empty':
+                nextCell.className = 'cell dirt';
+                nextCell.dataset.state = 'dirt';
+				// Play sound when converting empty to dirt
+                const boarSound = document.getElementById('boarSound');
+                boarSound.currentTime = 0;
+                boarSound.play();
+                break;
+        }
+    }
+    
+    // Move the boar
+    moveBoar(boar, currentIndex, nextIndex);
+    
+	setTimeout(() => {
+        const currentCell = cells[currentIndex];
+        if (currentCell.dataset.state === 'empty') {
+            currentCell.className = 'cell dirt';
+            currentCell.dataset.state = 'dirt';
+        }
+        
+        // Check adjacent cells for possible upgrades
+        const row = parseInt(currentCell.dataset.row);
+        const col = parseInt(currentCell.dataset.col);
+        
+        const directions = [
+            {row: 0, col: 1}, {row: 1, col: 0}, 
+            {row: 0, col: -1}, {row: -1, col: 0}
+        ];
+        
+        for (const dir of directions) {
+            const adjRow = row + dir.row;
+            const adjCol = col + dir.col;
+            if (adjRow >= 0 && adjRow < size && adjCol >= 0 && adjCol < size) {
+                const adjIndex = adjRow * size + adjCol;
+                checkCellPair(currentIndex, adjIndex);
+            }
+        }
+    }, 100);
+	
+    
+    
+    // Play sound every 5 movements
+    boarMovementCount++;
+    if (boarMovementCount % 5 === 0) {
+        const boarSound = document.getElementById('boarSound');
+        boarSound.currentTime = 0;
+        boarSound.play();
+    }
+}
+
+
+
+
+
+            function startMovementChecker() {
+                if (movementCheckInterval) clearInterval(movementCheckInterval);
+                movementCheckInterval = setInterval(() => {
+                    checkAndMoveVillagers();
+                }, 1000);
+            }
+
+          // Update game initialization to start boar spawning when castle exists
+function checkVillagerMovementConditions() {
+    const castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
+    if (castleExists) {
+        startMovementChecker();
+                startBoarSpawning(); // Start the boar spawning
+
+    } else {
+        if (movementCheckInterval) clearInterval(movementCheckInterval);
+        if (boarInterval) {
+            clearInterval(boarInterval);
+            boarInterval = null;
+        }
+    }
+}
+
+            function selectTool(tool) {
+                // Only allow selection if enough energy
+                if ((tool === 'mountain' && energy < 1) ||
+                    ((tool === 'river_house' || tool === 'farmer_house' || tool === 'blacksmith_house') && energy < 2)) {
+                    tool = 'dirt';
+                }
+                
+                // Update tool states
+                dirtTool.classList.remove('active');
+                mountainTool.classList.remove('active');
+                riverHouseTool.classList.remove('active');
+                farmerHouseTool.classList.remove('active');
+                blacksmithHouseTool.classList.remove('active');
+                
+                currentTool = tool;
+                const toolElement = document.getElementById(`${tool.replace(/_/g,'-')}-tool`);
+                if (toolElement) toolElement.classList.add('active');
+            }
+            
+            // Tool event listeners
+            dirtTool.addEventListener('click', () => selectTool('dirt'));
+            mountainTool.addEventListener('click', () => selectTool('mountain'));
+            riverHouseTool.addEventListener('click', () => selectTool('river_house'));
+            farmerHouseTool.addEventListener('click', () => selectTool('farmer_house'));
+            blacksmithHouseTool.addEventListener('click', () => selectTool('blacksmith_house'));
+            
+            function updateEnergyDisplay() {
+                 const energyDots = energyContainer.querySelectorAll('.energy');
+    energyDots.forEach((dot, index) => {
+        if (index < energy) {
+            dot.style.opacity = '1';
+            dot.style.animation = 'pulse-energy 8s infinite ease-in-out';
+            dot.style.animationDelay = `${index * 0.8}s`;
+        } else {
+            dot.style.animation = 'none';
+            dot.style.opacity = '0.3';
+        }
+    });
+                
+                // Update tool availability
+                mountainTool.disabled = energy < 1;
+                riverHouseTool.disabled = energy < 2;
+                farmerHouseTool.disabled = energy < 2;
+                blacksmithHouseTool.disabled = energy < 2;
+                
+                // Switch to dirt tool if current tool becomes unavailable
+                if ((currentTool === 'mountain' && energy < 1) ||
+                    (currentTool === 'river_house' && energy < 2) ||
+                    (currentTool === 'farmer_house' && energy < 2) ||
+                    (currentTool === 'blacksmith_house' && energy < 2)) {
+                    selectTool('dirt');
+                }
+				updateToolCostIndicators();
+            }
+            
+            
+            function highlightAdjacentEmptyCells(index) {
+                const cell = cells[index];
+                if (!cell || !['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
+                    return;
+                }
+
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                // Determine highlight class and cancel condition
+                let highlightClass, cancelTerrain;
+                switch(cell.dataset.state) {
+                    case 'blacksmith_house':
+                        highlightClass = 'highlight-blacksmith';
+                        cancelTerrain = 'mountain';
+                        break;
+                    case 'river_house':
+                        highlightClass = 'highlight-river';
+                        cancelTerrain = 'puddle';
+                        break;
+                    case 'farmer_house':
+                        highlightClass = 'highlight-farmer';
+                        cancelTerrain = 'grass';
+                        break;
+                }
+
+                // Check only top, bottom, left, and right cells
+                const directions = [
+                    {row: -1, col: 0}, {row: 1, col: 0},
+                    {row: 0, col: -1}, {row: 0, col: 1}
+                ];
+
+                // First remove all highlights from adjacent empty cells
+                for (const dir of directions) {
+                    const newRow = row + dir.row;
+                    const newCol = col + dir.col;
+                    if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                        const adjacentIndex = newRow * size + newCol;
+                        const adjacentCell = cells[adjacentIndex];
+                        if (adjacentCell && adjacentCell.dataset.state === 'empty') {
+                            adjacentCell.classList.remove(highlightClass);
+                        }
+                    }
+                }
+
+                // Now re-add highlights only if no cancel terrain is adjacent to the house
+                let shouldHighlight = true;
+                for (const dir of directions) {
+                    const newRow = row + dir.row;
+                    const newCol = col + dir.col;
+                    if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                        const adjacentIndex = newRow * size + newCol;
+                        const adjacentCell = cells[adjacentIndex];
+                        if (adjacentCell && adjacentCell.dataset.state === cancelTerrain) {
+                            shouldHighlight = false;
+                            break;
+                        }
+                    }
+                }
+
+                // If no cancel terrain is adjacent, highlight all empty adjacent cells
+                if (shouldHighlight) {
+                    for (const dir of directions) {
+                        const newRow = row + dir.row;
+                        const newCol = col + dir.col;
+                        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                            const adjacentIndex = newRow * size + newCol;
+                            const adjacentCell = cells[adjacentIndex];
+                            if (adjacentCell && adjacentCell.dataset.state === 'empty') {
+                                adjacentCell.classList.add(highlightClass);
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            function updateHighlightsForAllHouses() {
+                // Clear all highlights first
+                document.querySelectorAll('.cell.empty').forEach(cell => {
+                    cell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
+                });
+
+                // Then re-highlight around all houses
+                cells.forEach((cell, index) => {
+                    if (cell && ['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
+                        highlightAdjacentEmptyCells(index);
+                    }
+                });
+            }
+
+            function createSparkles(element, level) {
+                const rect = element.getBoundingClientRect();
+                const container = document.createElement('div');
+                container.className = 'sparkle-container';
+                container.style.left = `${rect.left}px`;
+                container.style.top = `${rect.top}px`;
+                
+                // Gold sparkles
+                for (let i = 0; i < 15; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 20 + Math.random() * 30;
+                    sparkle.style.left = `${Math.random() * 100}px`;
+                    sparkle.style.top = `${Math.random() * 100}px`;
+                    sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                    sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                    container.appendChild(sparkle);
+                }
+                
+                // Blue sparkles for water and houses
+                if (['puddle', 'river_house'].includes(level)) {
+                    for (let i = 0; i < 60; i++) {
+                        const sparkle = document.createElement('div');
+                        sparkle.className = 'blue-sparkle';
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = 30 + Math.random() * 40;
+                        sparkle.style.left = `${Math.random() * 100}px`;
+                        sparkle.style.top = `${Math.random() * 100}px`;
+                        sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                        sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                        container.appendChild(sparkle);
+                    }
+                }
+                
+                // Red sparkles for blacksmith and castle
+                if (['blacksmith_house', 'castle'].includes(level)) {
+                    for (let i = 0; i < 60; i++) {
+                        const sparkle = document.createElement('div');
+                        sparkle.className = 'red-sparkle';
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = 50 + Math.random() * 60;
+                        sparkle.style.left = `${Math.random() * 100}px`;
+                        sparkle.style.top = `${Math.random() * 100}px`;
+                        sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                        sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                        container.appendChild(sparkle);
+                    }
+                }
+                
+                // Ultimate effect for village and castle
+                if (level === 'village' || level === 'castle') {
+                    
+                    if (level === 'castle') {
+                        // Special golden sparkles for castle
+                        for (let i = 0; i < 100; i++) {
+                            const sparkle = document.createElement('div');
+                            sparkle.className = 'sparkle';
+                            sparkle.style.width = '6px';
+                            sparkle.style.height = '6px';
+                            const angle = Math.random() * Math.PI * 2;
+                            const distance = 70 + Math.random() * 80;
+                            sparkle.style.left = `${Math.random() * 100}px`;
+                            sparkle.style.top = `${Math.random() * 100}px`;
+                            sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                            sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                            container.appendChild(sparkle);
+                        }
+                    }
+                    
+                    // Show UI elements when village is reached
+                    if (level === 'village') {
+// Show UI elements with fade-in
+    setTimeout(() => {
+        energyContainer.classList.add('show');
+        toolSelection.classList.add('show');
+        
+        // Fade in each tool button one by one
+        const tools = document.querySelectorAll('.tool-btn:not(.house-tool)');
+        tools.forEach((tool, index) => {
+            setTimeout(() => {
+                tool.classList.add('show');
+            }, index * 100);
+        });
+    }, 300);
+						
+						 // Replenish energy only when first creating a village (not when merging to castle)
+    if (!document.querySelector('.cell[data-state="village"]')) {
+        energy = 5;
+        updateEnergyDisplay();
+    }
+    
+    // Select dirt tool by default
+    selectTool('dirt');
+                    }
+                }
+                
+                document.body.appendChild(container);
+                setTimeout(() => container.remove(), 2500);
+            }
+            
+            function createCell(index, row, col) {
+    const cell = document.createElement('div');
+    cell.className = 'cell empty';
+    cell.dataset.index = index;
+    cell.dataset.state = 'empty';
+    cell.dataset.row = row;
+    cell.dataset.col = col;
+    
+    // Create cube faces
+    ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(face => {
+        const faceElement = document.createElement('div');
+        faceElement.className = `cell-face cell-${face}`;
+        cell.appendChild(faceElement);
+        
+        if (face === 'front') {
+            faceElement.addEventListener('click', handleCellClick);
+            faceElement.dataset.index = index;
+        }
+    });
+    
+    // Position in 3D space with initial offset
+    const center = (size-1)/2;
+    const x = (col - center) * spacing;
+    const y = (row - center) * spacing;
+    
+    // Start with cells further back and invisible
+    //cell.style.transform = `translate3d(${x}px, ${y}px, -200px)`;
+    cell.style.opacity = '0';
+    cell.style.transition = 'transform 0.5s ease-out';
+    
+    // Stagger the appearance with increased delay (300ms per cell)
+    setTimeout(() => {
+        cell.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        cell.style.opacity = '1';
+    }, 1 * index); // Increased from 10ms to 300ms per cell
+    
+    grid3d.appendChild(cell);
+    cells[index] = cell;
+    return cell;
+}
+            
+            // Initialize grid
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    const index = row * size + col;
+                    createCell(index, row, col);
+                }
+            }
+            
+            // Camera controls
+            sceneContainer.addEventListener('mousedown', function(e) {
+                if (e.button === 2) {
+                    isRotating = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    e.preventDefault();
+                }
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isRotating) return;
+                
+                rotationZ = Math.max(minRotationZ, Math.min(maxRotationZ, rotationZ + (e.clientX - startX) * 0.2));
+                rotationX = Math.max(45, Math.min(75, rotationX - (e.clientY - startY) * 0.1));
+                startX = e.clientX;
+                startY = e.clientY;
+            });
+            
+            document.addEventListener('mouseup', function(e) {
+                if (e.button === 2) isRotating = false;
+            });
+            
+            sceneContainer.addEventListener('contextmenu', e => e.preventDefault());
+            
+
+function expandGrid() {
+    const oldSize = size;
+    size = 6; // Increase grid size to 6x6
+    const newCells = [];
+    
+    // Update scene container size
+    sceneContainer.style.width = `${size * spacing}px`;
+    sceneContainer.style.height = `${size * spacing}px`;
+    
+    // Calculate center for new grid
+    const center = (size - 1) / 2;
+    
+    // First, reposition all existing cells
+    for (let i = 0; i < cells.length; i++) {
+        if (cells[i]) {
+            const oldRow = Math.floor(i / oldSize);
+            const oldCol = i % oldSize;
+            
+            const newRow = oldRow;
+            const newCol = oldCol;
+            const index = newRow * size + newCol;
+            
+            const x = (newCol - center) * spacing;
+            const y = (newRow - center) * spacing;
+            cells[i].style.transform = `translate3d(${x}px, ${y}px, 0)`;
+            
+            cells[i].dataset.row = newRow;
+            cells[i].dataset.col = newCol;
+            cells[i].dataset.index = index;
+            
+            const frontFace = cells[i].querySelector('.cell-front');
+            if (frontFace) frontFace.dataset.index = index;
+            
+            newCells[index] = cells[i];
+        }
+    }
+    
+    // Create new cells for expanded grid
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            const index = row * size + col;
+            if (!newCells[index]) {
+                newCells[index] = createCell(index, row, col);
+                newCells[index].className = `cell forest`;
+                newCells[index].dataset.state = 'forest';
+            }
+        }
+    }
+    
+    cells = newCells;
+    
+    // Show the tool selection container first
+    toolSelection.classList.add('show');
+    
+    // Then show each house tool with a delay
+    setTimeout(() => {
+        const houseTools = document.querySelectorAll('.house-tool');
+        houseTools.forEach((tool, index) => {
+            setTimeout(() => {
+                tool.classList.add('show');
+                tool.style.visibility = 'visible';
+            }, index * 300);
+        });
+        
+        // Play sound effect
+        const bellSound = document.getElementById('bellSound1');
+        bellSound.currentTime = 0;
+        bellSound.volume = 0.3;
+        bellSound.play();
+    }, 500);
+    
+    updateHighlightsForAllHouses();
+	
+	 // After creating new forest cells, set the boar spawn forest
+    const forestCells = cells.filter(cell => cell && cell.dataset.state === 'forest');
+    if (forestCells.length > 0) {
+        boarSpawnForestIndex = forestCells[Math.floor(Math.random() * forestCells.length)].dataset.index;
+    }
+}
+
+            
+            function handleCellClick(e) {
+                if (e.button === 0) {
+                    const clickedFace = e.currentTarget;
+                    const index = parseInt(clickedFace.dataset.index);
+                    const clickedCell = cells[index];
+                    lastClickedIndex = index;
+                    
+                    // Clear highlight from this cell if it has one
+                    clickedCell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
+					
+					if (currentTool === 'dirt' && clickedCell.dataset.state === 'empty') {
+            // Play dirt placement sound
+            const dirtSound = document.getElementById('dirtSound');
+            dirtSound.currentTime = 0;
+            dirtSound.play();
+        }
+                    
+                    if (clickedCell.dataset.state === 'empty') {
+                        let cellClass, cost;
+                        switch(currentTool) {
+                            case 'mountain':
+                                if (energy < 1) return;
+                                cellClass = 'mountain';
+                                cost = 1;
+                                break;
+                            case 'river_house':
+                                if (energy < 2) return;
+                                cellClass = 'river_house';
+                                cost = 2;
+                                break;
+                            case 'farmer_house':
+                                if (energy < 2) return;
+                                cellClass = 'farmer_house';
+                                cost = 2;
+                                break;
+                            case 'blacksmith_house':
+                                if (energy < 2) return;
+                                cellClass = 'blacksmith_house';
+                                cost = 2;
+                                break;
+                            default:
+                                cellClass = 'dirt';
+                                cost = 0;
+                        }
+                        
+                        energy -= cost;
+                        clickedCell.className = `cell ${cellClass}`;
+                        clickedCell.dataset.state = cellClass;
+                        createSparkles(clickedCell, cellClass);
+                        updateEnergyDisplay();
+						
+						// Show villager counter if this is the first house being built
+            if (['river_house', 'farmer_house', 'blacksmith_house'].includes(cellClass)) {
+                setTimeout(() => {
+        const villagerCounter = document.querySelector('.villager-counter');
+        if (!villagerCounter.classList.contains('show')) {
+            villagerCounter.classList.add('show');
+        }
+    }, 300);
+            }
+                        
+                        // Highlight adjacent empty cells if this is a house
+                        if (['blacksmith_house', 'river_house', 'farmer_house'].includes(cellClass)) {
+                            highlightAdjacentEmptyCells(index);
+                        }
+                        
+                        setTimeout(() => checkAdjacentCells(index), 10);
+                        
+                        // Check villager movement conditions
+                        if (['river_house', 'farmer_house', 'blacksmith_house', 'castle'].includes(cellClass)) {
+                            setTimeout(() => checkVillagerMovementConditions(), 100);
+                        }
+                    }
+                    
+                    // Update highlights after any cell change
+                    updateHighlightsForAllHouses();
+                }
+            }
+            
+            function checkAdjacentCells(index) {
+                const row = parseInt(cells[index].dataset.row);
+                const col = parseInt(cells[index].dataset.col);
+                
+                // Check all four directions
+                const directions = [{row: 0, col: 1}, {row: 1, col: 0}, {row: 0, col: -1}, {row: -1, col: 0}];
+                for (const dir of directions) {
+                    const newRow = row + dir.row;
+                    const newCol = col + dir.col;
+                    if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                        checkCellPair(index, newRow * size + newCol);
+                    }
+                }
+            }
+            
+function checkCellPair(index1, index2) {
+    const cell1 = cells[index1];
+    const cell2 = cells[index2];
+    const state1 = cell1.dataset.state;
+    const state2 = cell2.dataset.state;
+    
+    if (state1 === state2 && state1 !== 'empty') {
+        // Skip pairing for houses 
+        if (['river_house', 'farmer_house', 'blacksmith_house'].includes(state1)) {
+            return;
+        }
+        
+        let transformIndex, clearIndex;
+        
+        if (lastClickedIndex === index1) {
+            transformIndex = index1;
+            clearIndex = index2;
+        } else if (lastClickedIndex === index2) {
+            transformIndex = index2;
+            clearIndex = index1;
+        } else {
+            transformIndex = index2;
+            clearIndex = index1;
+        }
+        
+        const transformCell = cells[transformIndex];
+        const clearCell = cells[clearIndex];
+        const currentState = transformCell.dataset.state;
+        
+        let newState, newClass, soundId, shouldReplenishEnergy = false;
+        switch (currentState) {
+            case 'dirt':
+                newState = 'grass';
+                newClass = 'grass';
+                soundId = 'bellSound1';
+                break;
+            case 'grass':
+                newState = 'puddle';
+                newClass = 'puddle';
+                soundId = 'bellSound2';
+                break;
+            case 'puddle':
+                newState = 'mountain';
+                newClass = 'mountain';
+                soundId = 'bellSound3';
+                break;
+            case 'mountain':
+                newState = 'village';
+                newClass = 'village';
+                soundId = 'bellSound4';
+                shouldReplenishEnergy = true; // Only replenish when creating village from mountains
+                break;
+            case 'village':
+                newState = 'castle';
+                newClass = 'castle';
+                soundId = 'bellSound5';
+                // Add special pulse effect (4x slower)
+                const energyDots = energyContainer.querySelectorAll('.energy');
+                energyDots.forEach((dot, index) => {
+                    dot.style.animation = 'none';
+                    void dot.offsetWidth; // Trigger reflow
+                    dot.style.animation = 'pulse-energy 2s 2 ease-in-out';
+                    setTimeout(() => {
+                        dot.style.animation = 'pulse-energy 8s infinite ease-in-out';
+                        dot.style.animationDelay = `${index * 0.8}s`;
+                    }, 2000);
+                });
+                createSparkles(transformCell, newState);
+                setTimeout(() => {
+                    expandGrid(); // This will now show house tools
+                    checkVillagerMovementConditions();
+                    setTimeout(spawnBoar, 1000);
+                }, 300);
+                break;
+            case 'castle':
+                return;
+            default:
+                return;
+        }
+        
+        // Replenish energy if we're creating a village from mountains
+        if (shouldReplenishEnergy) {
+            energy = 5;
+            updateEnergyDisplay();
+        }
+        
+        if (currentSound) {
+            currentSound.pause();
+            currentSound.currentTime = 0;
+        }
+        currentSound = document.getElementById(soundId);
+        currentSound.play();
+        
+        transformCell.className = `cell ${newClass}`;
+        transformCell.dataset.state = newState;
+        clearCell.className = 'cell empty';
+        clearCell.dataset.state = 'empty';
+        
+        transformCell.style.transform += ' translateZ(50px)';
+        setTimeout(() => {
+            transformCell.style.transform = transformCell.style.transform.replace(' translateZ(50px)', '');
+        }, 300);
+        
+        createSparkles(transformCell, newState);
+        
+        // Handle castle creation
+        if (newState === 'castle') {
+            setTimeout(() => {
+                expandGrid();
+                checkVillagerMovementConditions();
+                // Spawn a boar immediately after expansion
+                setTimeout(spawnBoar, 2000);
+            }, 300);
+        }
+        
+        setTimeout(() => {
+            checkAdjacentCells(transformIndex);
+            checkAdjacentCells(clearIndex);
+            // Update highlights after transformation
+            updateHighlightsForAllHouses();
+        }, 10);
+    }
+}
+
+            // Initialize movement checking
+            setTimeout(() => {
+                checkVillagerMovementConditions();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Short+Stack&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Gloria+Hallelujah&display=swap" rel="stylesheet">
+    <title>This Precious Town</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    <h1 id="gameTitle"></h1>
+    
+    <div class="villager-counter">
+        <div class="villager-icon"></div>
+        <span id="villagerCount">100</span>
+    </div>
+    
+    <div class="energy-container" id="energyContainer">
+        <div class="energy"></div>
+        <div class="energy"></div>
+        <div class="energy"></div>
+        <div class="energy"></div>
+        <div class="energy"></div>
+    </div>
+    
+    <div class="tool-selection">
+        <div class="tool-btn" id="dirt-tool" title="Dirt (Costs 0 Energy)">
+            <div class="tool-cost"></div>
+        </div>
+        <div class="tool-btn" id="mountain-tool" title="Mountain (Costs 1 Energy)">
+            <div class="tool-cost">
+                <div class="energy-cost"></div>
+            </div>
+        </div>
+        <div class="tool-btn house-tool" id="farmer-house-tool" title="Farmer House (Costs 2 Energy)">
+            <div class="tool-cost">
+                <div class="energy-cost"></div>
+                <div class="energy-cost"></div>
+            </div>
+        </div>
+        <div class="tool-btn house-tool" id="river-house-tool" title="River House (Costs 2 Energy)">
+            <div class="tool-cost">
+                <div class="energy-cost"></div>
+                <div class="energy-cost"></div>
+            </div>
+        </div>
+        <div class="tool-btn house-tool" id="blacksmith-house-tool" title="Blacksmith House (Costs 2 Energy)">
+            <div class="tool-cost">
+                <div class="energy-cost"></div>
+                <div class="energy-cost"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="scene-container" id="sceneContainer">
+        <div class="scene">
+            <div class="grid-3d" id="grid3d"></div>
+        </div>
+    </div>
+    
+    <audio id="bellSound1" preload="auto"><source src="bell1.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound2" preload="auto"><source src="bell2.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound3" preload="auto"><source src="bell3.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound4" preload="auto"><source src="bell4.mp3" type="audio/mpeg"></audio>
+    <audio id="bellSound5" preload="auto"><source src="bell5.mp3" type="audio/mpeg"></audio>
+    <audio id="villagerSound" preload="auto"><source src="villager.mp3" type="audio/mpeg"></audio>
+    <audio id="dirtSound" preload="auto"><source src="dirt.mp3" type="audio/mpeg"></audio>
+    <audio id="boarSound" preload="auto"><source src="boar.mp3" type="audio/mpeg"></audio>
+    <audio id="ambientSound" preload="auto" loop>
+        <source src="ambient.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
