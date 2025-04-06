@@ -9,7 +9,21 @@ body {
     overflow: hidden;
     touch-action: none;
     user-select: none;
-    background: linear-gradient(to bottom, #0a0e2a 0%, #1a1a40 100%);
+    background: linear-gradient(to bottom, #000000 0%, #1a1a40 100%);
+	transition: background 10s ease;
+}
+
+/* Add this for the overlay transition effect */
+.background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    opacity: 0;
+    transition: opacity 10s ease-in-out;
+    pointer-events: none;
 }
 
 /* Add this at the top of your CSS */
@@ -20,6 +34,74 @@ body {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
+}
+
+.sunlight-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(255,255,210,0.3) 0%, transparent 70%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 5s ease-in-out;
+}
+
+.sunlight-effect.active {
+    opacity: 0.7;
+}
+
+.cell.sunlit {
+    filter: brightness(1.2) sepia(0.5);
+    transition: filter 3s ease-in-out;
+}
+
+/* Update cloud styles in style.css */
+.cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 1;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+.cloud.visible {
+    opacity: 0.7;
+    transform: translateY(0);
+}
+
+.cloud::before, .cloud::after {
+    content: '';
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    filter: blur(5px);
+}
+
+.cloud::before {
+    width: 80%;
+    height: 80%;
+    top: -30%;
+    left: 10%;
+}
+
+.cloud::after {
+    content: '';
+    position: absolute;
+    background: inherit;
+    border-radius: inherit;
+}
+
+@keyframes float-cloud {
+    0% {
+        transform: translateX(-200px);
+    }
+    100% {
+        transform: translateX(calc(100vw + 200px));
+    }
 }
 
 .highlight-blacksmith {
@@ -44,6 +126,7 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
+    pointer-events: none;
 }
 
 .star {
@@ -51,6 +134,7 @@ body {
     background-color: white;
     border-radius: 50%;
     animation: twinkle 5s infinite steps(5);
+    transition: opacity 10s ease-in-out;
 }
 
 @keyframes twinkle {

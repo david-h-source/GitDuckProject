@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let boarMovementCount = 0;
     const ambientSound = document.getElementById('ambientSound');
     ambientSound.volume = 0.5;
-    ambientSound.play().catch(e => console.log("Audio play failed:", e));
+    //ambientSound.play().catch(e => console.log("Audio play failed:", e));
     
     // Camera controls
     let isRotating = false;
@@ -116,6 +116,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const maxZoom = 2.8;
     const minRotationZ = 0;
     const maxRotationZ = 90;
+	// Add this near the top with other game state variables
+let firstVillagePlaced = false;
+let firstPathToCastleMade = false;
     
     // Game state variables
     let villagersReached = {
@@ -223,19 +226,115 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function updateVillagerCounter() {
-        villagersRemaining = Math.max(0, villagersRemaining);
-        document.getElementById('villagerCount').textContent = villagersRemaining;
+function updateVillagerCounter() {
+    villagersRemaining = Math.max(0, villagersRemaining);
+    document.getElementById('villagerCount').textContent = villagersRemaining;
+    
+    // Change to blue sky with clouds when 34 villagers remain
+    if (villagersRemaining <= 34 && !document.body.classList.contains('daytime')) {
+        document.body.classList.add('daytime');
         
-        if (villagersRemaining <= lastMilestone - 10 || villagersRemaining === 10) {
-            playMilestoneSound(villagersRemaining);
-            lastMilestone = villagersRemaining;
+        // Start the transition to daytime
+        changeBackground('linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%)');
+        
+        const starsContainer = document.getElementById('stars');
+        const stars = starsContainer.querySelectorAll('.star');
+        
+        // Fade out stars
+        stars.forEach(star => {
+            star.style.transition = 'opacity 8s ease-in-out';
+            star.style.opacity = '0';
+        });
+        
+        // Create continuous cloud system
+        function createCloud() {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            
+            // Random cloud size and position
+            const width = 100 + Math.random() * 200;
+            const height = 40 + Math.random() * 60;
+            const top = Math.random() * 100;
+            
+            cloud.style.width = `${width}px`;
+            cloud.style.height = `${height}px`;
+            cloud.style.top = `${top}%`;
+            cloud.style.left = `-${width}px`;
+            
+            // Random cloud shape variations
+            if (Math.random() > 0.5) {
+                cloud.style.borderRadius = '50%';
+                cloud.style.filter = 'blur(5px)';
+                cloud.style.opacity = '0.7';
+                
+                // Add cloud puff
+                cloud.innerHTML = `
+                    <div style="position:absolute; width:60%; height:60%; 
+                        background:inherit; border-radius:inherit; 
+                        top:-30%; left:20%; filter:blur(3px)"></div>
+                    <div style="position:absolute; width:40%; height:40%; 
+                        background:inherit; border-radius:inherit; 
+                        top:20%; right:-10%; filter:blur(2px)"></div>
+                `;
+            } else {
+                cloud.style.borderRadius = '50px';
+                cloud.style.filter = 'blur(8px)';
+                cloud.style.opacity = '0.8';
+            }
+            
+            // Random animation duration (30-60 seconds)
+            const duration = 30 + Math.random() * 30;
+            cloud.style.animation = `float-cloud ${duration}s linear forwards`;
+            
+            starsContainer.appendChild(cloud);
+            
+            // Fade in quickly
+            setTimeout(() => {
+                cloud.style.transition = 'opacity 2s ease-in';
+                cloud.style.opacity = '0.7';
+            }, 50);
+            
+            // Remove cloud after animation and create a new one
+            cloud.addEventListener('animationend', () => {
+                cloud.remove();
+                if (document.body.classList.contains('daytime')) {
+                    createCloud();
+                }
+            });
         }
         
-        if (villagersRemaining <= 0) {
-            checkVictory();
+        // Initial cloud creation (5-8 clouds)
+        const initialCloudCount = 5 + Math.floor(Math.random() * 4);
+        for (let i = 0; i < initialCloudCount; i++) {
+            setTimeout(() => {
+                createCloud();
+            }, i * 3000); // Stagger initial cloud creation
         }
+        
+        // Continuous cloud generation
+        const cloudInterval = setInterval(() => {
+            if (!document.body.classList.contains('daytime')) {
+                clearInterval(cloudInterval);
+                return;
+            }
+            createCloud();
+        }, 8000); // New cloud every 8 seconds
+        
+        // Remove stars after they've faded out
+        setTimeout(() => {
+            stars.forEach(star => star.remove());
+        }, 8000);
     }
+    
+    if (villagersRemaining <= lastMilestone - 10 || villagersRemaining === 10) {
+        playMilestoneSound(villagersRemaining);
+        lastMilestone = villagersRemaining;
+    }
+    
+    if (villagersRemaining <= 0) {
+        checkVictory();
+    }
+}
 
     function playMilestoneSound(currentCount) {
         if (currentCount % 10 === 0) {
@@ -338,63 +437,97 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function findPathToCastle(startIndex) {
-        const castleIndex = cells.findIndex(cell => cell && cell.dataset.state === 'castle');
-        if (castleIndex === -1) return null;
-        
-        const startCell = cells[startIndex];
-        const startRow = parseInt(startCell.dataset.row);
-        const startCol = parseInt(startCell.dataset.col);
-        const houseType = startCell.dataset.state.split('_')[0];
-        
+function findPathToCastle(startIndex) {
+	
+	if (!firstPathToCastleMade) {
+						firstPathToCastleMade = true;
+						changeBackground('linear-gradient(to bottom, rgb(17 60 127) 0%, rgb(173 75 28) 100%)');
+					}
+    // Find all castle indices
+    const castleIndices = cells
+        .map((cell, index) => (cell && cell.dataset.state === 'castle' ? index : -1))
+        .filter(index => index !== -1);
+
+    if (castleIndices.length === 0) return null;
+
+    const startCell = cells[startIndex];
+    const startRow = parseInt(startCell.dataset.row);
+    const startCol = parseInt(startCell.dataset.col);
+    const houseType = startCell.dataset.state.split('_')[0];
+
+    let bestPath = null;
+    let shortestLength = Infinity;
+
+    // Try to find a path to each castle
+    for (const castleIndex of castleIndices) {
         const castleRow = parseInt(cells[castleIndex].dataset.row);
         const castleCol = parseInt(cells[castleIndex].dataset.col);
-        
+
         const queue = [[startRow, startCol, []]];
         const visited = new Set();
         visited.add(`${startRow},${startCol}`);
-        
+
         const directions = [
             {row: -1, col: 0},
             {row: 1, col: 0},
             {row: 0, col: -1},
             {row: 0, col: 1}
         ];
-        
+
         while (queue.length > 0) {
             const [currentRow, currentCol, path] = queue.shift();
             const currentIndex = currentRow * size + currentCol;
-            
+
             if (currentRow === castleRow && currentCol === castleCol) {
-                return path.concat([currentIndex]);
+                // Found a path to this castle
+                const fullPath = path.concat([currentIndex]);
+                if (fullPath.length < shortestLength) {
+                    bestPath = fullPath;
+                    shortestLength = fullPath.length;
+                }
+                break;
             }
-            
+
             for (const dir of directions) {
                 const newRow = currentRow + dir.row;
                 const newCol = currentCol + dir.col;
                 const newIndex = newRow * size + newCol;
-                
+
                 if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
                     const cell = cells[newIndex];
                     
-                    if (!cell || 
-                        cell.dataset.state === 'empty' || 
-                        cell.dataset.state === 'forest' ||
-                        cell.dataset.state.endsWith('_house')) {
-                        continue;
+                    if (!cell) continue;
+                    
+                    const state = cell.dataset.state;
+                    
+                    // Check if cell is valid for this villager type
+                    let isValidPath = false;
+                    switch(houseType) {
+                        case 'blacksmith':
+                            isValidPath = ['mountain', 'rock', 'stone', 'castle'].includes(state);
+                            break;
+                        case 'farmer':
+                            isValidPath = ['grass', 'tree', 'windmill', 'castle'].includes(state);
+                            break;
+                        case 'river':
+                            isValidPath = ['puddle', 'river', 'cascade', 'castle'].includes(state);
+                            break;
                     }
                     
+                    if (!isValidPath) continue;
+                    
+                    // Special first step requirement
                     if (path.length === 0) {
                         let isValidFirstStep = false;
                         switch(houseType) {
+                            case 'blacksmith':
+                                isValidFirstStep = (state === 'mountain');
+                                break;
                             case 'farmer':
-                                isValidFirstStep = (cell.dataset.state === 'windmill');
+                                isValidFirstStep = (state === 'windmill');
                                 break;
                             case 'river':
-                                isValidFirstStep = (cell.dataset.state === 'cascade');
-                                break;
-                            case 'blacksmith':
-                                isValidFirstStep = (cell.dataset.state === 'mountain');
+                                isValidFirstStep = (state === 'cascade');
                                 break;
                         }
                         if (!isValidFirstStep) continue;
@@ -407,22 +540,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        return null;
     }
+
+    return bestPath;
+}
     
-    function updateHouseVisuals() {
-    cells.forEach(cell => {
+function updateHouseVisuals() {
+    cells.forEach((cell, index) => {
         if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
             const houseType = cell.dataset.state.split('_')[0];
+            
+            // Update visual state based on villagers
             if (spawnedVillagers[houseType] >= maxVillagersPerHouse[houseType]) {
                 cell.style.filter = 'grayscale(80%) brightness(0.7)';
-                // Removed the pointerEvents line to keep functionality
+                // Remove all highlights around this house
+                removeHighlightsAroundHouse(index);
             } else {
                 cell.style.filter = '';
             }
         }
     });
 }
+
+function removeHighlightsAroundHouse(index) {
+    const cell = cells[index];
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+    
+    const directions = [
+        {row: -1, col: 0}, {row: 1, col: 0},
+        {row: 0, col: -1}, {row: 0, col: 1}
+    ];
+    
+    for (const dir of directions) {
+        const newRow = row + dir.row;
+        const newCol = col + dir.col;
+        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+            const adjacentIndex = newRow * size + newCol;
+            const adjacentCell = cells[adjacentIndex];
+            if (adjacentCell) {
+                adjacentCell.classList.remove(
+                    'highlight-farmer', 
+                    'highlight-river', 
+                    'highlight-blacksmith'
+                );
+            }
+        }
+    }
+}
+
     
     function checkVictory() {
         if (villagersRemaining <= 0 && 
@@ -595,7 +761,6 @@ function checkAndMoveVillagers() {
         if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
             const houseType = cell.dataset.state.split('_')[0];
             
-            // Only spawn if we haven't reached the limit for this house type
             if (spawnedVillagers[houseType] < maxVillagersPerHouse[houseType]) {
                 if (!villagers.has(index)) {
                     const villager = createVillagerForHouse(index);
@@ -778,7 +943,7 @@ function spawnBoar() {
             spawnCell.classList.remove('boar-spawning');
             wanderBoar(boar, spawnIndex);
             isBoarSpawning = false;
-        }, 1000);
+        }, 500);
         
     }, 3000); // 3 second warning before spawn
 }
@@ -825,7 +990,7 @@ function moveBoar(boar, fromIndex, toIndex) {
                 boarSound.currentTime = 0;
                 boarSound.play();
             }
-            setTimeout(() => wanderBoar(boar, toIndex), 9000);
+            setTimeout(() => wanderBoar(boar, toIndex), 4000);
         }
     }, 2000);
 	
@@ -1029,93 +1194,96 @@ function wanderBoar(boar, currentIndex) {
         updateToolCostIndicators();
     }
     
-function highlightAdjacentEmptyCells(index) {
-    const cell = cells[index];
-    if (!cell || !['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
-        return;
-    }
-
-    const row = parseInt(cell.dataset.row);
-    const col = parseInt(cell.dataset.col);
-    
-    let highlightClass, requiredAdjacent;
-    switch(cell.dataset.state) {
-        case 'blacksmith_house':
-            highlightClass = 'highlight-blacksmith';
-            requiredAdjacent = 'mountain';
-            break;
-        case 'river_house':
-            highlightClass = 'highlight-river';
-            requiredAdjacent = 'cascade';
-            break;
-        case 'farmer_house':
-            highlightClass = 'highlight-farmer';
-            requiredAdjacent = 'windmill';
-            break;
-    }
-
-    const directions = [
-        {row: -1, col: 0}, {row: 1, col: 0},
-        {row: 0, col: -1}, {row: 0, col: 1}
-    ];
-
-    // First remove all highlights from adjacent cells
-    for (const dir of directions) {
-        const newRow = row + dir.row;
-        const newCol = col + dir.col;
-        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-            const adjacentIndex = newRow * size + newCol;
-            const adjacentCell = cells[adjacentIndex];
-            if (adjacentCell) {
-                adjacentCell.classList.remove('highlight-farmer', 'highlight-river', 'highlight-blacksmith');
-            }
-        }
-    }
-
-    // Check if required adjacent exists
-    let hasRequiredAdjacent = false;
-    for (const dir of directions) {
-        const newRow = row + dir.row;
-        const newCol = col + dir.col;
-        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-            const adjacentIndex = newRow * size + newCol;
-            const adjacentCell = cells[adjacentIndex];
-            if (adjacentCell && adjacentCell.dataset.state === requiredAdjacent) {
-                hasRequiredAdjacent = true;
-                break;
-            }
-        }
-    }
-
-    // Only highlight if required adjacent doesn't exist
-    if (!hasRequiredAdjacent) {
-        for (const dir of directions) {
-            const newRow = row + dir.row;
-            const newCol = col + dir.col;
-            if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-                const adjacentIndex = newRow * size + newCol;
-                const adjacentCell = cells[adjacentIndex];
-                if (adjacentCell && adjacentCell.dataset.state === 'empty') {
-                    adjacentCell.classList.add(highlightClass);
+            function highlightAdjacentEmptyCells(index) {
+                const cell = cells[index];
+                if (!cell || !['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
+                    return;
                 }
+
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                // Determine highlight class and cancel condition
+                let highlightClass, cancelTerrain;
+                switch(cell.dataset.state) {
+                    case 'blacksmith_house':
+                        highlightClass = 'highlight-blacksmith';
+                        cancelTerrain = 'mountain';
+                        break;
+                    case 'river_house':
+                        highlightClass = 'highlight-river';
+                        cancelTerrain = 'cascade';
+                        break;
+                    case 'farmer_house':
+                        highlightClass = 'highlight-farmer';
+                        cancelTerrain = 'windmill';
+                        break;
+                }
+
+                // Check only top, bottom, left, and right cells
+                const directions = [
+                    {row: -1, col: 0}, {row: 1, col: 0},
+                    {row: 0, col: -1}, {row: 0, col: 1}
+                ];
+
+                // First remove all highlights from adjacent empty cells
+                for (const dir of directions) {
+                    const newRow = row + dir.row;
+                    const newCol = col + dir.col;
+                    if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                        const adjacentIndex = newRow * size + newCol;
+                        const adjacentCell = cells[adjacentIndex];
+                        if (adjacentCell && adjacentCell.dataset.state === 'empty') {
+                            adjacentCell.classList.remove(highlightClass);
+                        }
+                    }
+                }
+
+                // Now re-add highlights only if no cancel terrain is adjacent to the house
+                let shouldHighlight = true;
+                for (const dir of directions) {
+                    const newRow = row + dir.row;
+                    const newCol = col + dir.col;
+                    if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                        const adjacentIndex = newRow * size + newCol;
+                        const adjacentCell = cells[adjacentIndex];
+                        if (adjacentCell && adjacentCell.dataset.state === cancelTerrain) {
+                            shouldHighlight = false;
+                            break;
+                        }
+                    }
+                }
+
+                // If no cancel terrain is adjacent, highlight all empty adjacent cells
+                if (shouldHighlight) {
+                    for (const dir of directions) {
+                        const newRow = row + dir.row;
+                        const newCol = col + dir.col;
+                        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+                            const adjacentIndex = newRow * size + newCol;
+                            const adjacentCell = cells[adjacentIndex];
+                            if (adjacentCell && adjacentCell.dataset.state === 'empty') {
+                                adjacentCell.classList.add(highlightClass);
+                            }
+                        }
+                    }
+                }
+
             }
-        }
-    }
-}
 
-   function updateHighlightsForAllHouses() {
-    // First remove all highlights
-    document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.remove('highlight-farmer', 'highlight-river', 'highlight-blacksmith');
-    });
+function updateHighlightsForAllHouses() {
+                // Clear all highlights first
+                document.querySelectorAll('.cell.empty').forEach(cell => {
+                    cell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
+                });
 
-    // Then add highlights where needed
-    cells.forEach((cell, index) => {
-        if (cell && ['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
-            highlightAdjacentEmptyCells(index);
-        }
-    });
-}
+                // Then re-highlight around all houses
+                cells.forEach((cell, index) => {
+                    if (cell && ['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
+                        highlightAdjacentEmptyCells(index);
+                    }
+                });
+            }
 
     function createSparkles(element, level) {
         const rect = element.getBoundingClientRect();
@@ -1528,6 +1696,11 @@ function handleCellClick(e) {
                     newClass = 'village';
                     soundId = 'bellSound4';
                     shouldReplenishEnergy = true;
+					 // Only change background for the first village placed
+					if (!firstVillagePlaced) {
+						firstVillagePlaced = true;
+						changeBackground('linear-gradient(to bottom, #1a1a40 0%, #310707 100%)');
+					}
                     break;
                 case 'village':
                     newState = 'castle';
@@ -1601,15 +1774,44 @@ function handleCellClick(e) {
             setTimeout(() => {
                 checkAdjacentCells(transformIndex);
                 checkAdjacentCells(clearIndex);
-                updateHighlightsForAllHouses();
+				updateHighlightsForAllHouses()
             }, 10);
+			
+
+
         }
+					
+						
     }
 
     setTimeout(() => {
         checkVillagerMovementConditions();
     }, 1000);
 });
+
+function changeBackground(newGradient) {
+    // Only change if it's different from current background
+    if (!document.body.dataset.currentBg || document.body.dataset.currentBg !== newGradient) {
+        document.body.dataset.currentBg = newGradient;
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'background-overlay';
+        overlay.style.background = newGradient;
+        overlay.style.opacity = '0';
+        document.body.appendChild(overlay);
+        
+        // Start the transition
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+            
+            // After transition completes
+            setTimeout(() => {
+                document.body.style.background = newGradient;
+                overlay.remove();
+            }, 8000);
+        }, 50);
+    }
+}
 
 function createResourceDisplay() {
     const resourceContainer = document.createElement('div');
