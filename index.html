@@ -6,6 +6,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Short+Stack&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Gloria+Hallelujah&display=swap" rel="stylesheet">
     <title>This Precious Town</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Preload important images -->
+    <link rel="preload" href="dirt.jpg" as="image">
+    <link rel="preload" href="grass.jpg" as="image">
+    <link rel="preload" href="puddle.jpg" as="image">
+    <link rel="preload" href="mountain.jpg" as="image">
+    <link rel="preload" href="village.jpg" as="image">
+    <link rel="preload" href="river_house.jpg" as="image">
+    <link rel="preload" href="farmer_house.jpg" as="image">
+    <link rel="preload" href="blacksmith_house.jpg" as="image">
+    <link rel="preload" href="castle.jpg" as="image">
+    <link rel="preload" href="forest.jpg" as="image">
+    <link rel="preload" href="villager.gif" as="image">
+    <link rel="preload" href="boar.gif" as="image">
 </head>
 <body>
     <div class="stars" id="stars"></div>
@@ -28,7 +41,13 @@
         <div class="tool-btn" id="dirt-tool" title="Dirt (Costs 0 Energy)">
             <div class="tool-cost"></div>
         </div>
-        <div class="tool-btn" id="mountain-tool" title="Mountain (Costs 1 Energy)">
+		<div class="tool-btn" id="puddle-tool" title="Puddle (Costs 0 Energy)">
+            <div class="tool-cost"></div>
+        </div>
+		<div class="tool-btn" id="stone-tool" title="Stone (Costs 0 Energy)">
+            <div class="tool-cost"></div>
+        </div>
+        <div class="tool-btn" id="windmill-tool" title="Windmill (Costs 1 Energy)">
             <div class="tool-cost">
                 <div class="energy-cost"></div>
             </div>

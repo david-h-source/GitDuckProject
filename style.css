@@ -12,6 +12,16 @@ body {
     background: linear-gradient(to bottom, #0a0e2a 0%, #1a1a40 100%);
 }
 
+/* Add this at the top of your CSS */
+.cell-face {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
 .highlight-blacksmith {
     border: 2px solid #f44336 !important;
     box-shadow: 0 0 15px #f44336 !important;
@@ -272,45 +282,65 @@ h1 {
 }
 
 .dirt .cell-front { 
-    background-image: url('dirt.jpg');
-    background-size: 100% 100%;
+    background-image: url('dirt.jpg') !important;
 }
 .grass .cell-front { 
-    background-image: url('grass.jpg');
-    background-size: 100% 100%;
+    background-image: url('grass.jpg') !important;
+}
+.tree .cell-front { 
+    background-image: url('tree.jpg') !important;
+}
+.windmill .cell-front { 
+    background-image: url('windmill.jpg') !important;
 }
 .puddle .cell-front { 
-    background-image: url('puddle.jpg');
-    background-size: 100% 100%;
+    background-image: url('puddle.jpg') !important;
+}
+.river .cell-front { 
+    background-image: url('river.jpg') !important;
+}
+.cascade .cell-front { 
+    background-image: url('cascade.jpg') !important;
+}
+.stone .cell-front { 
+    background-image: url('stone.jpg') !important;
+}
+.rock .cell-front { 
+    background-image: url('rock.jpg') !important;
 }
 .mountain .cell-front { 
-    background-image: url('mountain.jpg');
-    background-size: 100% 100%;
+    background-image: url('mountain.jpg') !important;
 }
 .village .cell-front { 
-    background-image: url('village.jpg');
-    background-size: 100% 100%;
+    background-image: url('village.jpg') !important;
 }
 .river_house .cell-front { 
-    background-image: url('river_house.jpg');
-    background-size: 100% 100%;
+    background-image: url('river_house.jpg') !important;
 }
 .farmer_house .cell-front { 
-    background-image: url('farmer_house.jpg');
-    background-size: 100% 100%;
+    background-image: url('farmer_house.jpg') !important;
 }
 .blacksmith_house .cell-front { 
-    background-image: url('blacksmith_house.jpg');
-    background-size: 100% 100%;
+    background-image: url('blacksmith_house.jpg') !important;
 }
 .castle .cell-front { 
-    background-image: url('castle.jpg');
-    background-size: 100% 100%;
+    background-image: url('castle.jpg') !important;
 }
 .forest .cell-front { 
-    background-image: url('forest.jpg');
-    background-size: 100% 100%;
+    background-image: url('forest.jpg') !important;
 }
+
+.cell.highlight-farmer .cell-front {
+    box-shadow: inset 0 0 0 2px #4CAF50;
+}
+.cell.highlight-river .cell-front {
+    box-shadow: inset 0 0 0 2px #2196F3;
+}
+.cell.highlight-blacksmith .cell-front {
+    box-shadow: inset 0 0 0 2px #F44336;
+}
+
+
 
 .sparkle-container {
     position: absolute;
@@ -380,13 +410,13 @@ h1 {
 
 .energy {
     display: inline-block;
-    width: 35px;
-    height: 35px;
+    width: 25px;
+    height: 25px;
     background-color: #9c27b0;
     border-radius: 50%;
     margin-right: 5px;
     box-shadow: 0 0 10px #9c27b0;
-    animation: pulse-energy 8s infinite ease-in-out;
+    animation: pulse-energy 6s infinite ease-in-out;
     transform-origin: center;
 }
 
@@ -402,7 +432,7 @@ h1 {
         box-shadow: 0 0 10px #9c27b0;
     }
     50% {
-        transform: scale(1.1);
+        transform: scale(1.2);
         box-shadow: 0 0 10px #9c27b0;
     }
 }
@@ -565,8 +595,8 @@ h1 {
 }
 
 .tool-btn {
-    width: 150px;
-    height: 150px;
+    width: 100px;
+    height: 100px;
     border-radius: 15px;
     border: 3px solid transparent;
     cursor: pointer;
@@ -599,8 +629,8 @@ h1 {
 }
 
 .energy-cost {
-    width: 25px;
-    height: 25px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background-color: #9c27b0;
     margin-left: 3px;
@@ -635,12 +665,22 @@ h1 {
     background-size: cover;
 }
 
+#puddle-tool { 
+    background-image: url('puddle.jpg');
+    background-size: cover;
+}
+
+#stone-tool { 
+    background-image: url('stone.jpg');
+    background-size: cover;
+}
+
 .tool-btn.house-tool {
     display: none;
 }
 
-#mountain-tool { 
-    background-image: url('mountain.jpg');
+#windmill-tool { 
+    background-image: url('windmill.jpg');
     background-size: cover;
 }
 

@@ -8,6 +8,41 @@ document.addEventListener('DOMContentLoaded', function() {
             ? '<span class="space" style="--char-index:'+i+'">&nbsp;</span>'
             : '<span style="--char-index:'+i+'">'+char+'</span>'
     ).join('');
+	
+	// Image preloading function
+    function preloadImages() {
+        const images = [
+            'dirt.jpg',
+            'grass.jpg',
+			'tree.jpg',
+			'windmill.jpg',
+            'puddle.jpg',
+			'river.jpg',
+			'cascade.jpg',
+            'stone.jpg',
+			'rock.jpg',
+			'mountain.jpg',
+            'village.jpg',
+            'river_house.jpg',
+            'farmer_house.jpg',
+            'blacksmith_house.jpg',
+            'castle.jpg',
+            'forest.jpg',
+            'villager.gif',
+            'boar.gif',
+            'dirt_side.jpg'
+        ];
+        
+        images.forEach(img => {
+            const image = new Image();
+            image.src = img;
+        });
+    }
+
+    // Call preload at the very beginning
+    preloadImages();
+	
+	
     
     // Add extra space between words
     const spaces = titleElement.querySelectorAll('.space');
@@ -34,10 +69,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const energyContainer = document.getElementById('energyContainer');
     const toolSelection = document.querySelector('.tool-selection');
     const dirtTool = document.getElementById('dirt-tool');
-    const mountainTool = document.getElementById('mountain-tool');
+	const puddleTool = document.getElementById('puddle-tool');
+	const stoneTool = document.getElementById('stone-tool');
     const riverHouseTool = document.getElementById('river-house-tool');
     const farmerHouseTool = document.getElementById('farmer-house-tool');
     const blacksmithHouseTool = document.getElementById('blacksmith-house-tool');
+	const windmillTool = document.getElementById('windmill-tool');
+
+	// Initially hide advanced tools
+    windmillTool.style.display = 'none';
+    puddleTool.style.display = 'none';
+    stoneTool.style.display = 'none';
     
     // Game settings
     let size = 5;
@@ -346,10 +388,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         let isValidFirstStep = false;
                         switch(houseType) {
                             case 'farmer':
-                                isValidFirstStep = (cell.dataset.state === 'grass');
+                                isValidFirstStep = (cell.dataset.state === 'windmill');
                                 break;
                             case 'river':
-                                isValidFirstStep = (cell.dataset.state === 'puddle');
+                                isValidFirstStep = (cell.dataset.state === 'cascade');
                                 break;
                             case 'blacksmith':
                                 isValidFirstStep = (cell.dataset.state === 'mountain');
@@ -369,19 +411,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateHouseVisuals() {
-        cells.forEach(cell => {
-            if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
-                const houseType = cell.dataset.state.split('_')[0];
-                if (spawnedVillagers[houseType] >= maxVillagersPerHouse[houseType]) {
-                    cell.style.filter = 'grayscale(80%) brightness(0.7)';
-                    cell.style.pointerEvents = 'none';
-                } else {
-                    cell.style.filter = '';
-                    cell.style.pointerEvents = '';
-                }
+    cells.forEach(cell => {
+        if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
+            const houseType = cell.dataset.state.split('_')[0];
+            if (spawnedVillagers[houseType] >= maxVillagersPerHouse[houseType]) {
+                cell.style.filter = 'grayscale(80%) brightness(0.7)';
+                // Removed the pointerEvents line to keep functionality
+            } else {
+                cell.style.filter = '';
             }
-        });
-    }
+        }
+    });
+}
     
     function checkVictory() {
         if (villagersRemaining <= 0 && 
@@ -544,28 +585,27 @@ document.addEventListener('DOMContentLoaded', function() {
         requestAnimationFrame(animate);  
     }  
 
-    function checkAndMoveVillagers() {
-        if (villagersRemaining <= 0) return;
+function checkAndMoveVillagers() {
+    if (villagersRemaining <= 0) return;
 
-        const castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
-        if (!castleExists) return;
+    const castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
+    if (!castleExists) return;
 
-        cells.forEach((cell, index) => {
-            if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
-                const houseType = cell.dataset.state.split('_')[0];
-                
-                if (spawnedVillagers[houseType] >= maxVillagersPerHouse[houseType]) {
-                    return;
-                }
-
+    cells.forEach((cell, index) => {
+        if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
+            const houseType = cell.dataset.state.split('_')[0];
+            
+            // Only spawn if we haven't reached the limit for this house type
+            if (spawnedVillagers[houseType] < maxVillagersPerHouse[houseType]) {
                 if (!villagers.has(index)) {
                     const villager = createVillagerForHouse(index);
                     if (villager) {
                         villagers.set(index, villager);
                         spawnedVillagers[houseType]++;
+                        updateVillagerCounter();
                     }
                 }
-                
+
                 const villager = villagers.get(index);
                 if (villager && !villager.isMoving) {
                     const path = findPathToCastle(index);
@@ -578,10 +618,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
-        });
-        
-        updateHouseVisuals();
-    }
+        }
+    });
+    
+    updateHouseVisuals();
+}
 
     function positionEntityOnCell(entity, cell) {
         const cellRect = cell.getBoundingClientRect();
@@ -598,65 +639,75 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function moveEntity(entity, path, type) {  
-        if (!path || path.length === 0 || villagersRemaining <= 0) return;  
+function moveEntity(entity, path, type) {  
+    if (!path || path.length === 0 || villagersRemaining <= 0) return;  
 
-        const sceneRect = sceneContainer.getBoundingClientRect();  
-        
-        positionEntityOnCell(entity, cells[path[0]]);  
-        
-        const sceneLeft = sceneRect.left;  
-        const sceneTop = sceneRect.top;  
-        
-        let startX = parseFloat(entity.style.left);  
-        let startY = parseFloat(entity.style.top);  
-        
-        const firstCell = cells[path[0]];  
-        const firstCellRect = firstCell.getBoundingClientRect();  
-        const targetX = firstCellRect.left - sceneLeft + firstCellRect.width/2 - 30;  
-        const targetY = firstCellRect.top - sceneTop + firstCellRect.height/2 - 45;  
-        
-        entity.style.transition = `transform ${800}ms cubic-bezier(0.4, 0, 0.2, 1)`;  
-        
-        entity.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px)`;  
-        
-        let currentIndex = 0;  
-        const moveSpeed = type === 'villager' ? 800 : 2000;  
-        
-        const moveNext = () => {  
-            if (currentIndex >= path.length - 1 || villagersRemaining <= 0) {  
-                if (type === 'villager' && villagersRemaining > 0) {  
-                    const houseType = cells[path[0]].dataset.state.split('_')[0];  
-                    villagersReached[houseType]++;  
-                    villagersRemaining--;
-                    updateVillagerCounter();
-                    if (villagersRemaining <= 0) {
-                        checkVictory();  
-                    }
-                }  
+    const sceneRect = sceneContainer.getBoundingClientRect();  
+    
+    positionEntityOnCell(entity, cells[path[0]]);  
+    
+    const sceneLeft = sceneRect.left;  
+    const sceneTop = sceneRect.top;  
+    
+    let startX = parseFloat(entity.style.left);  
+    let startY = parseFloat(entity.style.top);  
+    
+    const firstCell = cells[path[0]];  
+    const firstCellRect = firstCell.getBoundingClientRect();  
+    const targetX = firstCellRect.left - sceneLeft + firstCellRect.width/2 - 30;  
+    const targetY = firstCellRect.top - sceneTop + firstCellRect.height/2 - 45;  
+    
+    entity.style.transition = `transform ${800}ms cubic-bezier(0.4, 0, 0.2, 1)`;  
+    
+    entity.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px)`;  
+    
+    let currentIndex = 0;  
+    const moveSpeed = type === 'villager' ? 800 : 2000;  
+    
+    const moveNext = () => {  
+        if (currentIndex >= path.length - 1 || villagersRemaining <= 0) {  
+            // Check if reached castle
+            const finalCell = cells[path[currentIndex]];
+            if (type === 'villager' && finalCell.dataset.state === 'castle') {
+                // Remove villager when reaching castle
+                if (entity.parentNode) {
+                    entity.parentNode.removeChild(entity);
+                }
                 
-                entity.style.transition = 'none';  
-                entity.addEventListener('transitionend', () => {  
-                    if (entity.parentNode) entity.parentNode.removeChild(entity);  
-                    if (type === 'boar') currentBoars--;  
-                });  
+                const houseType = cells[path[0]].dataset.state.split('_')[0];  
+                villagersReached[houseType]++;  
+                villagersRemaining--;
+                updateVillagerCounter();
                 
-                return;  
+
+                
+                if (villagersRemaining <= 0) {
+                    checkVictory();  
+                }
             }  
             
-            currentIndex++;  
-            const nextCell = cells[path[currentIndex]];  
-            const nextCellRect = nextCell.getBoundingClientRect();  
-            const nextTargetX = nextCellRect.left - sceneLeft + nextCellRect.width/2 - 40;  
-            const nextTargetY = nextCellRect.top - sceneTop + nextCellRect.height/2 - 60;  
+            entity.style.transition = 'none';  
+            entity.addEventListener('transitionend', () => {  
+                if (entity.parentNode) entity.parentNode.removeChild(entity);  
+                if (type === 'boar') currentBoars--;  
+            });  
             
-            entity.style.transform = `translate(${nextTargetX - startX}px, ${nextTargetY - startY}px)`;  
-            
-            setTimeout(moveNext, moveSpeed);  
-        };  
+            return;  
+        }  
         
-        setTimeout(moveNext, 50);  
-    }    
+        currentIndex++;  
+        const nextCell = cells[path[currentIndex]];  
+        const nextCellRect = nextCell.getBoundingClientRect();  
+        const nextTargetX = nextCellRect.left - sceneLeft + nextCellRect.width/2 - 40;  
+        const nextTargetY = nextCellRect.top - sceneTop + nextCellRect.height/2 - 60;  
+        
+        entity.style.transform = `translate(${nextTargetX - startX}px, ${nextTargetY - startY}px)`;  
+        
+        setTimeout(moveNext, moveSpeed);  
+    };  
+    
+    setTimeout(moveNext, 50);  
+}   
 
     function startBoarSpawning() {
         if (!boarInterval) {
@@ -665,204 +716,231 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function spawnBoar() {
-        if (currentBoars >= maxBoars || isBoarSpawning) return;
-        
-        isBoarSpawning = true;
-        
-        const availableForests = cells.filter((cell, index) => 
-            cell && 
-            cell.dataset.state === 'forest' && 
-            index !== lastBoarForestIndex
-        );
-        
-        if (availableForests.length === 0) {
-            isBoarSpawning = false;
-            return;
-        }
-        
-        const spawnCell = availableForests[Math.floor(Math.random() * availableForests.length)];
-        const spawnIndex = parseInt(spawnCell.dataset.index);
-        lastBoarForestIndex = spawnIndex;
-        
-        spawnCell.classList.add('boar-spawn-warning');
-        
-        setTimeout(() => {
-            spawnCell.classList.remove('boar-spawn-warning');
-            spawnCell.classList.add('boar-spawning');
-            
-            const boar = document.createElement('div');
-            boar.className = 'boar';
-            
-            const cellRect = spawnCell.getBoundingClientRect();
-            const sceneRect = sceneContainer.getBoundingClientRect();
-            const x = cellRect.left - sceneRect.left + cellRect.width/2 - 30;
-            const y = cellRect.top - sceneRect.top + cellRect.height/2 - 45;
-            
-            boar.style.left = `${x}px`;
-            boar.style.top = `${y}px`;
-            sceneContainer.appendChild(boar);
-            
-            currentBoars++;
-            
-            const warningSound = document.getElementById('bellSound1');
-            warningSound.currentTime = 0;
-            warningSound.play();
-            
-            setTimeout(() => {
-                const boarSound = document.getElementById('boarSound');
-                boarSound.currentTime = 0;
-                boarSound.play();
-            }, 300);
-            
-            setTimeout(() => {
-                spawnCell.classList.remove('boar-spawning');
-                wanderBoar(boar, spawnIndex);
-                isBoarSpawning = false;
-            }, 1000);
-            
-        }, 3000);
+// Modified spawnBoar function
+function spawnBoar() {
+    if (currentBoars >= maxBoars || isBoarSpawning) return;
+    
+    isBoarSpawning = true;
+    
+    // Get all forest cells excluding last used one
+    const availableForests = cells.filter((cell, index) => 
+        cell && 
+        cell.dataset.state === 'forest' && 
+        index !== lastBoarForestIndex
+    );
+    
+    if (availableForests.length === 0) {
+        isBoarSpawning = false;
+        return;
     }
     
-    function moveBoar(boar, fromIndex, toIndex) {
-        const fromCell = cells[fromIndex];
-        const toCell = cells[toIndex];
+    // Random selection with visual preview
+    const spawnCell = availableForests[Math.floor(Math.random() * availableForests.length)];
+    const spawnIndex = parseInt(spawnCell.dataset.index);
+    lastBoarForestIndex = spawnIndex;
+    
+    // Visual spawn preparation (3 second warning)
+    spawnCell.classList.add('boar-spawn-warning');
+    
+    setTimeout(() => {
+        spawnCell.classList.remove('boar-spawn-warning');
+        spawnCell.classList.add('boar-spawning');
         
-        const fromRect = fromCell.getBoundingClientRect();
-        const toRect = toCell.getBoundingClientRect();
+        // Create boar after warning
+        const boar = document.createElement('div');
+        boar.className = 'boar';
+        
+        // Position boar
+        const cellRect = spawnCell.getBoundingClientRect();
         const sceneRect = sceneContainer.getBoundingClientRect();
+        const x = cellRect.left - sceneRect.left + cellRect.width/2 - 30;
+        const y = cellRect.top - sceneRect.top + cellRect.height/2 - 45;
         
-        const startX = fromRect.left - sceneRect.left + fromRect.width/2 - 30;
-        const startY = fromRect.top - sceneRect.top + fromRect.height/2 - 45;
-        const endX = toRect.left - sceneRect.left + toRect.width/2 - 30;
-        const endY = toRect.top - sceneRect.top + toRect.height/2 - 45;
+        boar.style.left = `${x}px`;
+        boar.style.top = `${y}px`;
+        sceneContainer.appendChild(boar);
         
-        boar.style.left = `${startX}px`;
-        boar.style.top = `${startY}px`;
+        currentBoars++;
         
-        boar.classList.remove('moving-boar');
-        void boar.offsetWidth;
-        boar.classList.add('moving-boar');
-        
-        boar.style.transition = 'left 2s ease-out, top 2s ease-out';
-        boar.style.left = `${endX}px`;
-        boar.style.top = `${endY}px`;
+        // Play sounds
+        const warningSound = document.getElementById('bellSound1');
+        warningSound.currentTime = 0;
+        warningSound.play();
         
         setTimeout(() => {
-            boar.classList.remove('moving-boar');
-            if (boar.parentNode) {
-                const currentCell = cells[toIndex];
-                if (currentCell.dataset.state === 'empty') {
-                    currentCell.className = 'cell dirt';
-                    currentCell.dataset.state = 'dirt';
-                    const boarSound = document.getElementById('boarSound');
-                    boarSound.currentTime = 0;
-                    boarSound.play();
-                }
-                setTimeout(() => wanderBoar(boar, toIndex), 9000);
-            }
-        }, 2000);
-    }
-
-    function wanderBoar(boar, currentIndex) {
-        if (villagersRemaining <= 0) {
-            if (boar.parentNode) boar.parentNode.removeChild(boar);
-            currentBoars--;
-            return;
-        }
-
-        const directions = [
-            {row: -1, col: 0}, {row: 1, col: 0},
-            {row: 0, col: -1}, {row: 0, col: 1}
-        ];
-        
-        const currentRow = parseInt(cells[currentIndex].dataset.row);
-        const currentCol = parseInt(cells[currentIndex].dataset.col);
-        const isEdgeBoar = (currentRow === 5 || currentCol === 5);
-        
-        const validMoves = [];
-        for (const dir of directions) {
-            const newRow = currentRow + dir.row;
-            const newCol = currentCol + dir.col;
-            
-            if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-                const newIndex = newRow * size + newCol;
-                const cell = cells[newIndex];
-                const state = cell.dataset.state;
-                
-                if (isEdgeBoar && state === 'forest') {
-                    validMoves.push(newIndex);
-                }
-                else if (['empty', 'dirt', 'grass', 'puddle'].includes(state)) {
-                    validMoves.push(newIndex);
-                }
-            }
-        }
-        
-        if (validMoves.length === 0) {
-            setTimeout(() => wanderBoar(boar, currentIndex), 9000);
-            return;
-        }
-        
-        const nextIndex = validMoves[Math.floor(Math.random() * validMoves.length)];
-        const nextCell = cells[nextIndex];
-        
-        const originalState = nextCell.dataset.state;
-        
-        if (nextCell.dataset.state !== 'forest') {
-            switch(nextCell.dataset.state) {
-                case 'puddle':
-                    nextCell.className = 'cell grass';
-                    nextCell.dataset.state = 'grass';
-                    break;
-                case 'grass':
-                    nextCell.className = 'cell dirt';
-                    nextCell.dataset.state = 'dirt';
-                    break;
-                case 'empty':
-                    nextCell.className = 'cell dirt';
-                    nextCell.dataset.state = 'dirt';
-                    const boarSound = document.getElementById('boarSound');
-                    boarSound.currentTime = 0;
-                    boarSound.play();
-                    break;
-            }
-        }
-        
-        moveBoar(boar, currentIndex, nextIndex);
-        
-        setTimeout(() => {
-            const currentCell = cells[currentIndex];
-            if (currentCell.dataset.state === 'empty') {
-                currentCell.className = 'cell dirt';
-                currentCell.dataset.state = 'dirt';
-            }
-            
-            const row = parseInt(currentCell.dataset.row);
-            const col = parseInt(currentCell.dataset.col);
-            
-            const directions = [
-                {row: 0, col: 1}, {row: 1, col: 0}, 
-                {row: 0, col: -1}, {row: -1, col: 0}
-            ];
-            
-            for (const dir of directions) {
-                const adjRow = row + dir.row;
-                const adjCol = col + dir.col;
-                if (adjRow >= 0 && adjRow < size && adjCol >= 0 && adjCol < size) {
-                    const adjIndex = adjRow * size + adjCol;
-                    checkCellPair(currentIndex, adjIndex);
-                }
-            }
-        }, 100);
-        
-        boarMovementCount++;
-        if (boarMovementCount % 5 === 0) {
             const boarSound = document.getElementById('boarSound');
             boarSound.currentTime = 0;
             boarSound.play();
+        }, 300);
+        
+        // Start wandering
+        setTimeout(() => {
+            spawnCell.classList.remove('boar-spawning');
+            wanderBoar(boar, spawnIndex);
+            isBoarSpawning = false;
+        }, 1000);
+        
+    }, 3000); // 3 second warning before spawn
+}
+    
+// Update the moveBoar function to include longer delay
+function moveBoar(boar, fromIndex, toIndex) {
+    const fromCell = cells[fromIndex];
+    const toCell = cells[toIndex];
+    
+    // Calculate positions
+    const fromRect = fromCell.getBoundingClientRect();
+    const toRect = toCell.getBoundingClientRect();
+    const sceneRect = sceneContainer.getBoundingClientRect();
+    
+    const startX = fromRect.left - sceneRect.left + fromRect.width/2 - 30;
+    const startY = fromRect.top - sceneRect.top + fromRect.height/2 - 45;
+    const endX = toRect.left - sceneRect.left + toRect.width/2 - 30;
+    const endY = toRect.top - sceneRect.top + toRect.height/2 - 45;
+    
+    // Set initial position
+    boar.style.left = `${startX}px`;
+    boar.style.top = `${startY}px`;
+    
+    // Start animation
+    boar.classList.remove('moving-boar');
+    void boar.offsetWidth;
+    boar.classList.add('moving-boar');
+    
+    // Animate movement
+    boar.style.transition = 'left 2s ease-out, top 2s ease-out';
+    boar.style.left = `${endX}px`;
+    boar.style.top = `${endY}px`;
+    
+    // Continue wandering after movement completes with 3x longer delay
+    setTimeout(() => {
+        boar.classList.remove('moving-boar');
+        if (boar.parentNode) {
+            const currentCell = cells[toIndex];
+            // Ensure the cell is dirt and play sound if we convert it
+            if (currentCell.dataset.state === 'empty') {
+                currentCell.className = 'cell dirt';
+                currentCell.dataset.state = 'dirt';
+                const boarSound = document.getElementById('boarSound');
+                boarSound.currentTime = 0;
+                boarSound.play();
+            }
+            setTimeout(() => wanderBoar(boar, toIndex), 9000);
+        }
+    }, 2000);
+	
+	
+}
+
+function wanderBoar(boar, currentIndex) {
+
+// Don't move boars if game is won
+    if (villagersRemaining <= 0) {
+        if (boar.parentNode) boar.parentNode.removeChild(boar);
+        currentBoars--;
+        return;
+    }
+
+    const directions = [
+        {row: -1, col: 0}, {row: 1, col: 0},
+        {row: 0, col: -1}, {row: 0, col: 1}
+    ];
+    
+    const currentRow = parseInt(cells[currentIndex].dataset.row);
+    const currentCol = parseInt(cells[currentIndex].dataset.col);
+    const isEdgeBoar = (currentRow === 5 || currentCol === 5);
+    
+    const validMoves = [];
+    for (const dir of directions) {
+        const newRow = currentRow + dir.row;
+        const newCol = currentCol + dir.col;
+        
+        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+            const newIndex = newRow * size + newCol;
+            const cell = cells[newIndex];
+            const state = cell.dataset.state;
+            
+            if (isEdgeBoar && state === 'forest') {
+                validMoves.push(newIndex);
+            }
+            else if (['empty', 'dirt', 'grass', 'puddle'].includes(state)) {
+                validMoves.push(newIndex);
+            }
         }
     }
+    
+    if (validMoves.length === 0) {
+        setTimeout(() => wanderBoar(boar, currentIndex), 9000);
+        return;
+    }
+    
+    const nextIndex = validMoves[Math.floor(Math.random() * validMoves.length)];
+    const nextCell = cells[nextIndex];
+    
+    // Store original state before any changes
+    const originalState = nextCell.dataset.state;
+    
+    // Downgrade terrain if not forest
+    if (nextCell.dataset.state !== 'forest') {
+        switch(nextCell.dataset.state) {
+            case 'puddle':
+                nextCell.className = 'cell grass';
+                nextCell.dataset.state = 'grass';
+                break;
+            case 'grass':
+                nextCell.className = 'cell dirt';
+                nextCell.dataset.state = 'dirt';
+                break;
+            case 'empty':
+                nextCell.className = 'cell dirt';
+                nextCell.dataset.state = 'dirt';
+				// Play sound when converting empty to dirt
+                const boarSound = document.getElementById('boarSound');
+                boarSound.currentTime = 0;
+                boarSound.play();
+                break;
+        }
+    }
+    
+    // Move the boar
+    moveBoar(boar, currentIndex, nextIndex);
+    
+	setTimeout(() => {
+        const currentCell = cells[currentIndex];
+        if (currentCell.dataset.state === 'empty') {
+            currentCell.className = 'cell dirt';
+            currentCell.dataset.state = 'dirt';
+        }
+        
+        // Check adjacent cells for possible upgrades
+        const row = parseInt(currentCell.dataset.row);
+        const col = parseInt(currentCell.dataset.col);
+        
+        const directions = [
+            {row: 0, col: 1}, {row: 1, col: 0}, 
+            {row: 0, col: -1}, {row: -1, col: 0}
+        ];
+        
+        for (const dir of directions) {
+            const adjRow = row + dir.row;
+            const adjCol = col + dir.col;
+            if (adjRow >= 0 && adjRow < size && adjCol >= 0 && adjCol < size) {
+                const adjIndex = adjRow * size + adjCol;
+                checkCellPair(currentIndex, adjIndex);
+            }
+        }
+    }, 100);
+	
+    
+    
+    // Play sound every 5 movements
+    boarMovementCount++;
+    if (boarMovementCount % 5 === 0) {
+        const boarSound = document.getElementById('boarSound');
+        boarSound.currentTime = 0;
+        boarSound.play();
+    }
+}
 
     function startMovementChecker() {
         if (movementCheckInterval) clearInterval(movementCheckInterval);
@@ -886,27 +964,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function selectTool(tool) {
-        if ((tool === 'mountain' && energy < 1) ||
-            ((tool === 'river_house' || tool === 'farmer_house' || tool === 'blacksmith_house') && energy < 2)) {
-            tool = 'dirt';
+		        const freeTools = ['dirt', 'puddle', 'stone'];
+
+       // Check energy only for non-free tools
+        if (!freeTools.includes(tool)) {
+            if ((tool === 'windmill' && energy < 1) ||
+                ((tool === 'river_house' || tool === 'farmer_house' || tool === 'blacksmith_house') && energy < 2)) {
+                tool = 'dirt'; // Default back to dirt if not enough energy
+            }
         }
         
+        // Update active states
         dirtTool.classList.remove('active');
-        mountainTool.classList.remove('active');
+        windmillTool.classList.remove('active');
         riverHouseTool.classList.remove('active');
         farmerHouseTool.classList.remove('active');
         blacksmithHouseTool.classList.remove('active');
+        puddleTool.classList.remove('active');
+        stoneTool.classList.remove('active');
         
         currentTool = tool;
         const toolElement = document.getElementById(`${tool.replace(/_/g,'-')}-tool`);
         if (toolElement) toolElement.classList.add('active');
     }
     
+    // Update tool event listeners
     dirtTool.addEventListener('click', () => selectTool('dirt'));
-    mountainTool.addEventListener('click', () => selectTool('mountain'));
+    windmillTool.addEventListener('click', () => selectTool('windmill'));
     riverHouseTool.addEventListener('click', () => selectTool('river_house'));
     farmerHouseTool.addEventListener('click', () => selectTool('farmer_house'));
     blacksmithHouseTool.addEventListener('click', () => selectTool('blacksmith_house'));
+    puddleTool.addEventListener('click', () => selectTool('puddle'));
+    stoneTool.addEventListener('click', () => selectTool('stone'));
     
     function updateEnergyDisplay() {
         const energyDots = energyContainer.querySelectorAll('.energy');
@@ -921,12 +1010,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        mountainTool.disabled = energy < 1;
+        // Update tool availability
+        windmillTool.disabled = energy < 1;
         riverHouseTool.disabled = energy < 2;
         farmerHouseTool.disabled = energy < 2;
         blacksmithHouseTool.disabled = energy < 2;
         
-        if ((currentTool === 'mountain' && energy < 1) ||
+        // Free tools are never disabled
+        puddleTool.disabled = false;
+        stoneTool.disabled = false;
+        
+        if ((currentTool === 'windmill' && energy < 1) ||
             (currentTool === 'river_house' && energy < 2) ||
             (currentTool === 'farmer_house' && energy < 2) ||
             (currentTool === 'blacksmith_house' && energy < 2)) {
@@ -935,36 +1029,66 @@ document.addEventListener('DOMContentLoaded', function() {
         updateToolCostIndicators();
     }
     
-    function highlightAdjacentEmptyCells(index) {
-        const cell = cells[index];
-        if (!cell || !['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
-            return;
+function highlightAdjacentEmptyCells(index) {
+    const cell = cells[index];
+    if (!cell || !['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
+        return;
+    }
+
+    const row = parseInt(cell.dataset.row);
+    const col = parseInt(cell.dataset.col);
+    
+    let highlightClass, requiredAdjacent;
+    switch(cell.dataset.state) {
+        case 'blacksmith_house':
+            highlightClass = 'highlight-blacksmith';
+            requiredAdjacent = 'mountain';
+            break;
+        case 'river_house':
+            highlightClass = 'highlight-river';
+            requiredAdjacent = 'cascade';
+            break;
+        case 'farmer_house':
+            highlightClass = 'highlight-farmer';
+            requiredAdjacent = 'windmill';
+            break;
+    }
+
+    const directions = [
+        {row: -1, col: 0}, {row: 1, col: 0},
+        {row: 0, col: -1}, {row: 0, col: 1}
+    ];
+
+    // First remove all highlights from adjacent cells
+    for (const dir of directions) {
+        const newRow = row + dir.row;
+        const newCol = col + dir.col;
+        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+            const adjacentIndex = newRow * size + newCol;
+            const adjacentCell = cells[adjacentIndex];
+            if (adjacentCell) {
+                adjacentCell.classList.remove('highlight-farmer', 'highlight-river', 'highlight-blacksmith');
+            }
         }
+    }
 
-        const row = parseInt(cell.dataset.row);
-        const col = parseInt(cell.dataset.col);
-        
-        let highlightClass, cancelTerrain;
-        switch(cell.dataset.state) {
-            case 'blacksmith_house':
-                highlightClass = 'highlight-blacksmith';
-                cancelTerrain = 'mountain';
+    // Check if required adjacent exists
+    let hasRequiredAdjacent = false;
+    for (const dir of directions) {
+        const newRow = row + dir.row;
+        const newCol = col + dir.col;
+        if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+            const adjacentIndex = newRow * size + newCol;
+            const adjacentCell = cells[adjacentIndex];
+            if (adjacentCell && adjacentCell.dataset.state === requiredAdjacent) {
+                hasRequiredAdjacent = true;
                 break;
-            case 'river_house':
-                highlightClass = 'highlight-river';
-                cancelTerrain = 'puddle';
-                break;
-            case 'farmer_house':
-                highlightClass = 'highlight-farmer';
-                cancelTerrain = 'grass';
-                break;
+            }
         }
+    }
 
-        const directions = [
-            {row: -1, col: 0}, {row: 1, col: 0},
-            {row: 0, col: -1}, {row: 0, col: 1}
-        ];
-
+    // Only highlight if required adjacent doesn't exist
+    if (!hasRequiredAdjacent) {
         for (const dir of directions) {
             const newRow = row + dir.row;
             const newCol = col + dir.col;
@@ -972,51 +1096,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const adjacentIndex = newRow * size + newCol;
                 const adjacentCell = cells[adjacentIndex];
                 if (adjacentCell && adjacentCell.dataset.state === 'empty') {
-                    adjacentCell.classList.remove(highlightClass);
-                }
-            }
-        }
-
-        let shouldHighlight = true;
-        for (const dir of directions) {
-            const newRow = row + dir.row;
-            const newCol = col + dir.col;
-            if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-                const adjacentIndex = newRow * size + newCol;
-                const adjacentCell = cells[adjacentIndex];
-                if (adjacentCell && adjacentCell.dataset.state === cancelTerrain) {
-                    shouldHighlight = false;
-                    break;
-                }
-            }
-        }
-
-        if (shouldHighlight) {
-            for (const dir of directions) {
-                const newRow = row + dir.row;
-                const newCol = col + dir.col;
-                if (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
-                    const adjacentIndex = newRow * size + newCol;
-                    const adjacentCell = cells[adjacentIndex];
-                    if (adjacentCell && adjacentCell.dataset.state === 'empty') {
-                        adjacentCell.classList.add(highlightClass);
-                    }
+                    adjacentCell.classList.add(highlightClass);
                 }
             }
         }
     }
+}
 
-    function updateHighlightsForAllHouses() {
-        document.querySelectorAll('.cell.empty').forEach(cell => {
-            cell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
-        });
+   function updateHighlightsForAllHouses() {
+    // First remove all highlights
+    document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('highlight-farmer', 'highlight-river', 'highlight-blacksmith');
+    });
 
-        cells.forEach((cell, index) => {
-            if (cell && ['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
-                highlightAdjacentEmptyCells(index);
-            }
-        });
-    }
+    // Then add highlights where needed
+    cells.forEach((cell, index) => {
+        if (cell && ['blacksmith_house', 'river_house', 'farmer_house'].includes(cell.dataset.state)) {
+            highlightAdjacentEmptyCells(index);
+        }
+    });
+}
 
     function createSparkles(element, level) {
         const rect = element.getBoundingClientRect();
@@ -1083,6 +1182,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             if (level === 'village') {
+				// Show windmill tool when village is created
+            windmillTool.style.display = 'block';
+            setTimeout(() => {
+                windmillTool.style.opacity = '1';
+                windmillTool.style.transform = 'translateY(0)';
+            }, 300);
                 setTimeout(() => {
                     energyContainer.classList.add('show');
                     toolSelection.classList.add('show');
@@ -1124,6 +1229,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (face === 'front') {
                 faceElement.addEventListener('click', handleCellClick);
                 faceElement.dataset.index = index;
+				// Set initial background to prevent flash of unstyled content
+                faceElement.style.backgroundImage = 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'none\' stroke=\'%23ccc\' stroke-width=\'1\' stroke-dasharray=\'5,5\'/></svg>")';
             }
         });
         
@@ -1247,78 +1354,89 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function handleCellClick(e) {
-        if (e.button === 0) {
-            const clickedFace = e.currentTarget;
-            const index = parseInt(clickedFace.dataset.index);
-            const clickedCell = cells[index];
-            lastClickedIndex = index;
-            
-            clickedCell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
-            
-            if (currentTool === 'dirt' && clickedCell.dataset.state === 'empty') {
-                const dirtSound = document.getElementById('dirtSound');
-                dirtSound.currentTime = 0;
-                dirtSound.play();
-            }
-            
-            if (clickedCell.dataset.state === 'empty') {
-                let cellClass, cost;
-                switch(currentTool) {
-                    case 'mountain':
-                        if (energy < 1) return;
-                        cellClass = 'mountain';
-                        cost = 1;
-                        break;
-                    case 'river_house':
-                        if (energy < 2) return;
-                        cellClass = 'river_house';
-                        cost = 2;
-                        break;
-                    case 'farmer_house':
-                        if (energy < 2) return;
-                        cellClass = 'farmer_house';
-                        cost = 2;
-                        break;
-                    case 'blacksmith_house':
-                        if (energy < 2) return;
-                        cellClass = 'blacksmith_house';
-                        cost = 2;
-                        break;
-                    default:
-                        cellClass = 'dirt';
-                        cost = 0;
-                }
-                
-                energy -= cost;
-                clickedCell.className = `cell ${cellClass}`;
-                clickedCell.dataset.state = cellClass;
-                createSparkles(clickedCell, cellClass);
-                updateEnergyDisplay();
-                
-                if (['river_house', 'farmer_house', 'blacksmith_house'].includes(cellClass)) {
-                    setTimeout(() => {
-                        const villagerCounter = document.querySelector('.villager-counter');
-                        if (!villagerCounter.classList.contains('show')) {
-                            villagerCounter.classList.add('show');
-                        }
-                    }, 300);
-                }
-                
-                if (['blacksmith_house', 'river_house', 'farmer_house'].includes(cellClass)) {
-                    highlightAdjacentEmptyCells(index);
-                }
-                
-                setTimeout(() => checkAdjacentCells(index), 10);
-                
-                if (['river_house', 'farmer_house', 'blacksmith_house', 'castle'].includes(cellClass)) {
-                    setTimeout(() => checkVillagerMovementConditions(), 100);
-                }
-            }
-            
-            updateHighlightsForAllHouses();
+function handleCellClick(e) {
+    if (e.button === 0) {
+        const clickedFace = e.currentTarget;
+        const index = parseInt(clickedFace.dataset.index);
+        const clickedCell = cells[index];
+        lastClickedIndex = index;
+        
+        clickedCell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
+        
+        if (currentTool === 'dirt' && clickedCell.dataset.state === 'empty') {
+            const dirtSound = document.getElementById('dirtSound');
+            dirtSound.currentTime = 0;
+            dirtSound.play();
         }
+        
+        if (clickedCell.dataset.state === 'empty') {
+            let cellClass, cost;
+            switch(currentTool) {
+                case 'windmill':  // Added windmill case
+                    if (energy < 1) return;
+                    cellClass = 'windmill';
+                    cost = 1;
+                    break;
+                case 'stone':
+                    cellClass = 'stone';
+                    cost = 0;
+                    break;
+                case 'puddle':
+                    cellClass = 'puddle';
+                    cost = 0;
+                    break;
+                case 'river_house':
+                    if (energy < 2) return;
+                    cellClass = 'river_house';
+                    cost = 2;
+                    break;
+                case 'farmer_house':
+                    if (energy < 2) return;
+                    cellClass = 'farmer_house';
+                    cost = 2;
+                    break;
+                case 'blacksmith_house':
+                    if (energy < 2) return;
+                    cellClass = 'blacksmith_house';
+                    cost = 2;
+                    break;
+                default:
+                    cellClass = 'dirt';
+                    cost = 0;
+            }
+            
+            energy -= cost;
+            clickedCell.className = `cell ${cellClass}`;
+            clickedCell.dataset.state = cellClass;
+            createSparkles(clickedCell, cellClass);
+            updateEnergyDisplay();
+            
+            if (['river_house', 'farmer_house', 'blacksmith_house'].includes(cellClass)) {
+                setTimeout(() => {
+                    const villagerCounter = document.querySelector('.villager-counter');
+                    if (!villagerCounter.classList.contains('show')) {
+                        villagerCounter.classList.add('show');
+                    }
+                }, 300);
+            }
+            
+            if (['blacksmith_house', 'river_house', 'farmer_house'].includes(cellClass)) {
+                highlightAdjacentEmptyCells(index);
+            }
+			setTimeout(() => {
+                checkAdjacentCells(index);
+                updateHighlightsForAllHouses(); // Update highlights after placement
+            }, 10);
+            
+            
+            if (['river_house', 'farmer_house', 'blacksmith_house', 'castle'].includes(cellClass)) {
+                setTimeout(() => checkVillagerMovementConditions(), 100);
+            }
+        }
+        
+        updateHighlightsForAllHouses();
     }
+}
     
     function checkAdjacentCells(index) {
         const row = parseInt(cells[index].dataset.row);
@@ -1364,22 +1482,48 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let newState, newClass, soundId, shouldReplenishEnergy = false;
             switch (currentState) {
+                // Dirt progression
                 case 'dirt':
                     newState = 'grass';
                     newClass = 'grass';
                     soundId = 'bellSound1';
                     break;
                 case 'grass':
-                    newState = 'puddle';
-                    newClass = 'puddle';
+                    newState = 'tree';
+                    newClass = 'tree';
                     soundId = 'bellSound2';
                     break;
-                case 'puddle':
-                    newState = 'mountain';
-                    newClass = 'mountain';
+                case 'tree':
+                    newState = 'windmill';
+                    newClass = 'windmill';
                     soundId = 'bellSound3';
                     break;
-                case 'mountain':
+                
+                // Stone progression
+                case 'stone':
+                    newState = 'rock';
+                    newClass = 'rock';
+                    soundId = 'bellSound1';
+                    break;
+                case 'rock':
+                    newState = 'mountain';
+                    newClass = 'mountain';
+                    soundId = 'bellSound2';
+                    break;
+                
+                // Water progression
+                case 'puddle':
+                    newState = 'river';
+                    newClass = 'river';
+                    soundId = 'bellSound1';
+                    break;
+                case 'river':
+                    newState = 'cascade';
+                    newClass = 'cascade';
+                    soundId = 'bellSound2';
+                    break;
+                
+                case 'windmill':
                     newState = 'village';
                     newClass = 'village';
                     soundId = 'bellSound4';
@@ -1389,6 +1533,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     newState = 'castle';
                     newClass = 'castle';
                     soundId = 'bellSound5';
+					// Show additional tools when castle is built
+                puddleTool.style.display = 'block';
+                stoneTool.style.display = 'block';
+				// Animate the new tools appearing
+                setTimeout(() => {
+                    puddleTool.style.opacity = '1';
+                    stoneTool.style.opacity = '1';
+                }, 300);
                     const energyDots = energyContainer.querySelectorAll('.energy');
                     energyDots.forEach((dot, index) => {
                         dot.style.animation = 'none';
@@ -1830,3 +1982,4 @@ function generateResources() {
     
     updateResourceDisplay();
 }
+
