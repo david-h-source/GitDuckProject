@@ -1533,6 +1533,8 @@ function handleCellClick(e) {
                     newState = 'castle';
                     newClass = 'castle';
                     soundId = 'bellSound5';
+					energy -= 2;
+					updateEnergyDisplay();
 					// Show additional tools when castle is built
                 puddleTool.style.display = 'block';
                 stoneTool.style.display = 'block';
