@@ -34,6 +34,24 @@ body {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
+	transform: translateZ(0);
+}
+
+/* Reduce the number of sparkles */
+.sparkle, .blue-sparkle, .red-sparkle {
+    display: none; /* Initially hidden */
+}
+
+/* Only show sparkles when animating */
+.sparkle-container .sparkle,
+.sparkle-container .blue-sparkle, 
+.sparkle-container .red-sparkle {
+    display: block;
+}
+
+/* Add will-change for elements that animate frequently */
+.villager, .boar {
+    will-change: transform, opacity;
 }
 
 .sunlight-effect {
@@ -270,9 +288,6 @@ h1 {
     box-sizing: border-box;
     border: 2px solid transparent;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
     pointer-events: none;
     width: 100%;
     height: 100%;

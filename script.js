@@ -632,6 +632,51 @@ function removeHighlightsAroundHouse(index) {
                 
                 const fireworksSound = new Audio('fireworks.mp3');
                 fireworksSound.loop = true;
+				
+				 // Initial fade in
+				fireworksSound.volume = 0;
+				fireworksSound.play().then(() => {
+					// Fade in over 2 seconds
+					const fadeIn = setInterval(() => {
+						if (fireworksSound.volume < 0.7) {
+							fireworksSound.volume += 0.05;
+						} else {
+							clearInterval(fadeIn);
+						}
+					}, 100);
+				});
+				
+				 // Set up fade out before loop and fade in after
+            fireworksSound.addEventListener('timeupdate', function() {
+                const fadeTime = 1.0; // seconds before end to start fading
+                const duration = fireworksSound.duration || 10; // fallback if duration not available
+                
+                if (fireworksSound.currentTime > duration - fadeTime) {
+                    // Fade out
+                    const fadeOut = setInterval(() => {
+                        if (fireworksSound.volume > 0.05) {
+                            fireworksSound.volume -= 0.05;
+                        } else {
+                            clearInterval(fadeOut);
+                        }
+                    }, 100);
+                    
+                    // After fade out, reset and fade in again
+                    setTimeout(() => {
+                        fireworksSound.currentTime = 0;
+                        const fadeIn = setInterval(() => {
+                            if (fireworksSound.volume < 0.7) {
+                                fireworksSound.volume += 0.05;
+                            } else {
+                                clearInterval(fadeIn);
+                            }
+                        }, 100);
+                    }, 1000);
+                }
+            });
+            
+            victoryOverlay.dataset.fireworksSound = fireworksSound;
+				
                 fireworksSound.play();
                 
                 createConfetti();
@@ -756,12 +801,32 @@ function checkAndMoveVillagers() {
 
     const castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
     if (!castleExists) return;
+	
+	// Count houses of each type
+    const houseCounts = {
+        farmer: 0,
+        river: 0,
+        blacksmith: 0
+    };
 
-    cells.forEach((cell, index) => {
+	cells.forEach(cell => {
         if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
             const houseType = cell.dataset.state.split('_')[0];
+            houseCounts[houseType]++;
+        }
+    });
+
+        cells.forEach((cell, index) => {
+        if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
+            const houseType = cell.dataset.state.split('_')[0];
+            const maxForThisHouse = maxVillagersPerHouse[houseType];
             
-            if (spawnedVillagers[houseType] < maxVillagersPerHouse[houseType]) {
+            // Calculate if this house can spawn an extra villager (if connected to castle)
+            const path = findPathToCastle(index);
+            const canSpawnExtra = path && path.length > 0;
+            const adjustedMax = canSpawnExtra ? maxForThisHouse + 1 : maxForThisHouse;
+            
+            if (spawnedVillagers[houseType] < adjustedMax && villagersRemaining > 0) {
                 if (!villagers.has(index)) {
                     const villager = createVillagerForHouse(index);
                     if (villager) {
@@ -876,7 +941,7 @@ function moveEntity(entity, path, type) {
 
     function startBoarSpawning() {
         if (!boarInterval) {
-            setTimeout(spawnBoar, 1000);
+            setTimeout(spawnBoar, 60000);
             boarInterval = setInterval(spawnBoar, boarSpawnInterval);
         }
     }
@@ -977,7 +1042,7 @@ function moveBoar(boar, fromIndex, toIndex) {
     boar.style.left = `${endX}px`;
     boar.style.top = `${endY}px`;
     
-    // Continue wandering after movement completes with 3x longer delay
+    // Continue wandering after movement completes
     setTimeout(() => {
         boar.classList.remove('moving-boar');
         if (boar.parentNode) {
@@ -990,7 +1055,6 @@ function moveBoar(boar, fromIndex, toIndex) {
                 boarSound.currentTime = 0;
                 boarSound.play();
             }
-            setTimeout(() => wanderBoar(boar, toIndex), 4000);
         }
     }, 2000);
 	
@@ -1035,7 +1099,7 @@ function wanderBoar(boar, currentIndex) {
     }
     
     if (validMoves.length === 0) {
-        setTimeout(() => wanderBoar(boar, currentIndex), 9000);
+        setTimeout(() => wanderBoar(boar, currentIndex), 15000);
         return;
     }
     
@@ -1105,6 +1169,12 @@ function wanderBoar(boar, currentIndex) {
         boarSound.currentTime = 0;
         boarSound.play();
     }
+	
+	// Schedule next movement after 10 seconds
+    setTimeout(() => {
+        wanderBoar(boar, nextIndex);
+    }, 15000);
+	
 }
 
     function startMovementChecker() {
@@ -1730,7 +1800,7 @@ function handleCellClick(e) {
                     setTimeout(() => {
                         expandGrid();
                         checkVillagerMovementConditions();
-                        setTimeout(spawnBoar, 1000);
+                        setTimeout(spawnBoar, 60000);
                     }, 300);
                     break;
                 case 'castle':
@@ -1767,7 +1837,7 @@ function handleCellClick(e) {
                 setTimeout(() => {
                     expandGrid();
                     checkVillagerMovementConditions();
-                    setTimeout(spawnBoar, 2000);
+                    setTimeout(spawnBoar, 60000);
                 }, 300);
             }
             
