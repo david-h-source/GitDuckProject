@@ -12,7 +12,7 @@ const instructions = [
 	{
 		title: "Good Job!",
 		content: "Make your town flourish again by guiding 100 villagers back to the castle. Grid space is limited, so don't hesitate to try again once you've figured out the best way to beat the game!",
-		trigger: () => firstVillagePlaced == true
+		trigger: () => castleExists == true
 	},
 	{
 		title: "Hi There!",
