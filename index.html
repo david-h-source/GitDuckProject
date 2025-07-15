@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Short+Stack&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Gloria+Hallelujah&display=swap" rel="stylesheet">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<link href="https://fonts.googleapis.com/css2?family=Short+Stack&family=Comic+Neue:wght@400;700&family=Patrick+Hand&family=Gloria+Hallelujah&display=swap" rel="stylesheet">
     <title>This Precious Town</title>
     <link rel="stylesheet" href="style.css">
     <!-- Preload important images -->
@@ -36,6 +36,11 @@
         <div class="energy"></div>
         <div class="energy"></div>
     </div>
+	
+	<div class="settings-toggle">
+	  <input type="checkbox" id="disableTooltips">
+	  <label for="disableTooltips">Disable Help Tooltips</label>
+	</div>
     
     <div class="tool-selection">
         <div class="tool-btn" id="dirt-tool" title="Dirt (Costs 0 Energy)">
@@ -52,19 +57,19 @@
                 <div class="energy-cost"></div>
             </div>
         </div>
-        <div class="tool-btn house-tool" id="farmer-house-tool" title="Farmer House (Costs 2 Energy)">
+        <div class="tool-btn house-tool" id="farmer-house-tool" title="Carpenter House (Costs 2 Energy)">
             <div class="tool-cost">
                 <div class="energy-cost"></div>
                 <div class="energy-cost"></div>
             </div>
         </div>
-        <div class="tool-btn house-tool" id="river-house-tool" title="River House (Costs 2 Energy)">
+        <div class="tool-btn house-tool" id="river-house-tool" title="Fisherman House (Costs 2 Energy)">
             <div class="tool-cost">
                 <div class="energy-cost"></div>
                 <div class="energy-cost"></div>
             </div>
         </div>
-        <div class="tool-btn house-tool" id="blacksmith-house-tool" title="Blacksmith House (Costs 2 Energy)">
+        <div class="tool-btn house-tool" id="blacksmith-house-tool" title="Stonecutter House (Costs 2 Energy)">
             <div class="tool-cost">
                 <div class="energy-cost"></div>
                 <div class="energy-cost"></div>
@@ -90,7 +95,9 @@
         <source src="ambient.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
-
+	<div class="instruction-container" id="instructionContainer">
+		<!-- Instructions will be added dynamically -->
+	</div>
     <script src="script.js"></script>
 </body>
 </html>

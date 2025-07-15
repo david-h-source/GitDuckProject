@@ -1,3 +1,69 @@
+// Instruction system
+let currentBoars = 0;
+let villagersRemaining = 100;
+let currentTool = 'dirt';
+let isBoarSpawning = false;
+let firstVillagePlaced = false;
+let firstPathToCastleMade = false;
+let castleExists = false;
+let disabledTooltips = document.getElementById('disableTooltips')?.checked || false;
+let firstHousePlaced = false;
+const instructions = [
+	{
+		title: "Good Job!",
+		content: "Make your town flourish again by guiding 100 villagers back to the castle. Grid space is limited, so don't hesitate to try again once you've figured out the best way to beat the game!",
+		trigger: () => firstVillagePlaced == true
+	},
+	{
+		title: "Hi There!",
+		content: "Click on an empty cell to place some dirt! Combine two identical tiles to upgrade them.",
+		showImmediately: true
+	},
+	{
+		title: "Combinations",
+		content: "Adjacent tiles upgrade but diagonals don't count! The last tile placed will the one to be upgraded.",
+		showImmediately: true
+	},
+    {
+        title: "The Village",
+        content: "Each village will replenish your energy that is displayed on the top left. Try to build two adjacent villages to see what happens!",
+        trigger: () => firstVillagePlaced == true
+    },
+		{
+        title: "The Windmill",
+        content: "You can now build a windmill that costs 1 energy! This is considered as the highest tile of the grass category.",
+        trigger: () => currentTool != 'dirt'
+    },
+    {
+        title: "The Castle",
+        content: "Congratulations on building your castle! You can now build worker houses : a fisherman house, a carpenter house and a stonecutter house.",
+        trigger: () => castleExists == true
+    },
+    {
+        title: "Boar Warning",
+        content: "Boars will appear from forests and destroy your paths. Watch out!",
+        trigger: () => isBoarSpawning == true
+    },
+    {
+        title: "Worker Houses",
+        content: "Building a house costs 2 energy. You'll have to create a path for the villagers from each house type to the castle. Each house must have the highest tile of it's type adjacent to it.",
+        trigger: () => currentTool.includes('house')
+    },
+    {
+        title: "Guiding villagers",
+        content: "Villagers require a path made with the same tile type as their houses to move to the castle.\nGreen = grass,\nBlue = water,\nRed = stone.",
+        trigger: () => firstHousePlaced == true
+    }
+];
+
+const disableCheckbox = document.getElementById('disableTooltips');
+if (disableCheckbox) {
+    disableCheckbox.addEventListener('change', function(e) {
+        disabledTooltips = e.target.checked;
+        checkInstructionTriggers(); // Update immediately when changed
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Split title into animated letters
     const titleText = "This Precious Town";
@@ -86,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const spacing = 110;
     let cells = [];
     let lastClickedIndex = null;
-    let currentTool = 'dirt';
     let energy = 5;
     
     const maxVillagersPerHouse = {
@@ -116,9 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const maxZoom = 2.8;
     const minRotationZ = 0;
     const maxRotationZ = 90;
-	// Add this near the top with other game state variables
-let firstVillagePlaced = false;
-let firstPathToCastleMade = false;
+
     
     // Game state variables
     let villagersReached = {
@@ -127,14 +190,13 @@ let firstPathToCastleMade = false;
         blacksmith: 0
     };
     const maxBoars = 2;
-    let currentBoars = 0;
+    
     let boarInterval;
-    let villagersRemaining = 100;
+    
     let lastMilestone = 100;
     let boarSpawnForestIndex = null;
     const boarSpawnInterval = 60000;
     let lastBoarForestIndex = null;
-    let isBoarSpawning = false;
     
     // Audio
     let currentSound = null;
@@ -185,6 +247,7 @@ let firstPathToCastleMade = false;
     const villagers = new Map();
     let movementCheckInterval;
     updateVillagerCounter();
+	//setupResponsiveGrid();
     
     document.addEventListener('DOMContentLoaded', function() {
 		// Initialize UI
@@ -354,6 +417,50 @@ function updateVillagerCounter() {
             }, 300);
         }
     }
+	
+	function setupResponsiveGrid() {
+		const sceneContainer = document.getElementById('sceneContainer');
+		const grid3d = document.getElementById('grid3d');
+		
+		function updateGridSize() {
+			// Get viewport width
+			const viewportWidth = Math.min(window.innerWidth, window.document.documentElement.clientWidth);
+			
+			// Calculate appropriate size for mobile
+			const isMobile = viewportWidth < 768; // Adjust breakpoint as needed
+			const containerSize = isMobile ? viewportWidth * 0.9 : 600; // 90% of viewport on mobile
+			
+			// Apply size to container
+			sceneContainer.style.width = `${containerSize}px`;
+			sceneContainer.style.height = `${containerSize}px`;
+			
+			// Update cell sizes
+			const cells = document.querySelectorAll('.cell');
+			const cellSize = containerSize / size; // size is your grid dimension (5 or 6)
+			
+			cells.forEach(cell => {
+				cell.style.width = `${cellSize}px`;
+				cell.style.height = `${cellSize}px`;
+				
+				// Update cell faces if needed
+				const faces = cell.querySelectorAll('.cell-face');
+				faces.forEach(face => {
+					face.style.width = `${cellSize}px`;
+					face.style.height = `${cellSize}px`;
+				});
+			});
+			
+			// Adjust 3D transform scale based on container size
+			const scaleFactor = containerSize / 600 * 3.6; // Base scale is 3.6 for 600px container
+			grid3d.style.transform = `rotateX(50deg) rotateZ(45deg) translateZ(-950px) translateY(-30px) scale(${scaleFactor})`;
+		}
+		
+		// Initial setup
+		updateGridSize();
+		
+		// Update on window resize
+		window.addEventListener('resize', updateGridSize);
+	}
 
     function createCounterSparkles() {
         const counter = document.querySelector('.villager-counter');
@@ -799,7 +906,7 @@ function removeHighlightsAroundHouse(index) {
 function checkAndMoveVillagers() {
     if (villagersRemaining <= 0) return;
 
-    const castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
+    castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
     if (!castleExists) return;
 	
 	// Count houses of each type
@@ -813,6 +920,7 @@ function checkAndMoveVillagers() {
         if (cell && ['river_house', 'farmer_house', 'blacksmith_house'].includes(cell.dataset.state)) {
             const houseType = cell.dataset.state.split('_')[0];
             houseCounts[houseType]++;
+			firstHousePlaced = true;
         }
     });
 
@@ -1185,7 +1293,7 @@ function wanderBoar(boar, currentIndex) {
     }
 
     function checkVillagerMovementConditions() {
-        const castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
+        castleExists = cells.some(cell => cell && cell.dataset.state === 'castle');
         if (castleExists) {
             startMovementChecker();
             startBoarSpawning();
@@ -2037,6 +2145,7 @@ function moveBoarToTarget(boar, target) {
 
 // ========== ENHANCED VILLAGER SYSTEM ==========
 function createVillagerForHouse(houseIndex) {
+	firstHousePlaced = true;
     const cell = cells[houseIndex];
     if (!cell) return null;
     
@@ -2256,4 +2365,48 @@ function generateResources() {
     
     updateResourceDisplay();
 }
+
+function createInstructionBubble(title, content) {
+    const bubble = document.createElement('div');
+    bubble.className = 'instruction-bubble';
+    bubble.innerHTML = `
+        <button class="close-bubble">×</button>
+        <h3>${title}</h3>
+        <p>${content}</p>
+    `;
+    
+    const closeBtn = bubble.querySelector('.close-bubble');
+    closeBtn.addEventListener('click', () => {
+        bubble.style.opacity = '0';
+        setTimeout(() => bubble.remove(), 500);
+    });
+    
+    document.getElementById('instructionContainer').appendChild(bubble);
+    
+    // Show with slight delay for animation
+    setTimeout(() => bubble.classList.add('show'), 100);
+}
+
+function checkInstructionTriggers() {
+    if (disabledTooltips) {
+        // Clear existing instructions if disabled
+        document.getElementById('instructionContainer').innerHTML = '';
+        return;
+    }
+    
+    instructions.forEach(instr => {
+        if (!instr.shown && (instr.showImmediately || instr.trigger())) {
+            createInstructionBubble(instr.title, instr.content);
+            instr.shown = true;
+        }
+    });
+}
+
+// Initial instructions
+setTimeout(() => {
+    checkInstructionTriggers();
+    
+    // Also check periodically for new instructions
+    setInterval(checkInstructionTriggers, 1000);
+}, 2000);
 

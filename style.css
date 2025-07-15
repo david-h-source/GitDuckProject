@@ -895,3 +895,95 @@ h1 {
 .upgrade-btn:active {
     transform: scale(0.95);
 }
+
+.settings-toggle {
+  position: fixed;
+  bottom: 1%;
+  right: 1%;
+  background: rgba(0,0,0,0.7);
+  padding: 10px;
+  border-radius: 5px;
+  color: white;
+  z-index: 100;
+}
+
+.settings-toggle input {
+  margin-right: 8px;
+}
+
+/* Instruction bubbles */
+.instruction-container {
+    position: absolute;
+    right: 3%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 350px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.instruction-bubble {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 5%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    font-family: 'Comic Neue', cursive;
+    color: #333;
+	font-size:20px
+}
+
+.disable-tooltips .instruction-bubble {
+    display: none !important;
+}
+
+.instruction-bubble.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.instruction-bubble h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #9c27b0;
+    font-family: 'Gloria Hallelujah', cursive;
+}
+
+.instruction-bubble p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+.close-bubble {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    font-size: 35px;
+    cursor: pointer;
+    color: #888;
+    padding: 5px;
+}
+
+.close-bubble:hover {
+    color: #333;
+}
+
+.instruction-bubble::after {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid rgba(255, 255, 255, 0.9);
+}
