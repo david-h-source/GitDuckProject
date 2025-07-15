@@ -554,6 +554,7 @@ h1 {
     font-size: 36px;
     font-weight: bold;
     z-index: 100;
+	pointer-events: none;
 }
 
 .villager-icon {
@@ -900,11 +901,11 @@ h1 {
   position: fixed;
   bottom: 1%;
   right: 1%;
-  background: rgba(0,0,0,0.7);
   padding: 10px;
   border-radius: 5px;
   color: white;
   z-index: 100;
+  opacity: 50%
 }
 
 .settings-toggle input {
@@ -986,4 +987,167 @@ h1 {
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
     border-right: 10px solid rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 768px) {
+    .scene-container {
+        width: 100vw;
+        height: 100vw;
+        margin-top: 120px;
+        margin-bottom: 180px;
+        padding: 0;
+        overflow: visible;
+    }
+    
+    /* Update the grid layout */
+    .grid-3d {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+        width: 100%;
+        height: 100%;
+        gap: 2px;
+        transform: none !important;
+        perspective: none;
+        transition: all 0.5s ease;
+    }
+    
+    /* For 6x6 grid */
+    .grid-3d.expanded {
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+        gap: 1px;
+        transform: scale(0.9) !important;
+    }
+    
+    .cell {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        transform: none !important;
+        transition: all 0.5s ease;
+    }
+    
+    /* Ensure new cells are properly positioned */
+    .grid-3d.expanded .cell {
+        grid-column: attr(data-col);
+        grid-row: attr(data-row);
+    }
+    
+    .cell-face {
+        display: none;
+    }
+    
+    .cell-front {
+        display: block;
+        transform: none !important;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    /* Adjust tool selection for mobile */
+    .tool-selection {
+        position: fixed;
+		top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+		max-height: 20%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+        background: rgba(0,0,0,0.7);
+    }
+	
+	.settings-toggle {
+		position: fixed;
+		top: 15%;
+        bottom: auto;
+        left: auto;
+        right: 0;
+        display: flex;
+	}
+	
+	.energy-container {
+		position: fixed;
+		top: 15%;
+        bottom: auto;
+        left: 0;
+        right: auto;
+        display: flex;
+	}
+    
+    .tool-btn {
+        width: 60px;
+        height: 60px;
+        margin: 0;
+    }
+    
+    /* Adjust title position */
+    h1 {
+        position: fixed;
+        top: 10px;
+        font-size: 1.8rem;
+        white-space: normal;
+        width: 90%;
+        padding: 10px;
+    }
+    
+    /* Hide 3D faces */
+    .cell-back, .cell-right, .cell-left, .cell-top, .cell-bottom {
+        display: none !important;
+    }
+    
+    /* Adjust UI elements */
+    .energy-container, .villager-counter {
+        position: fixed;
+        top: 15%;
+        left: 5%;
+    }
+	
+    .villager-counter {
+        position: fixed;
+        top: 17%;
+        left: 5%;
+        font-size: 1.5rem;
+    }
+    
+    .villager-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    /* Instruction bubbles */
+    .instruction-container {
+        position: fixed;
+        top: auto;
+        bottom: 180px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        transform: none;
+    }
+    
+    .instruction-bubble::after {
+        display: none;
+    }
+    
+    .resource-container, .upgrade-container {
+        display: none; /* Hide on mobile for simplicity */
+    }
+	
+	.victory-title {
+		margin-top:40%
+	}
+	
+	.villager, .boar {
+        width: 15% !important;
+        height: 15% !important;    
+    }
 }

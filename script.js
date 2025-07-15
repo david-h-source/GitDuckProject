@@ -8,6 +8,18 @@ let firstPathToCastleMade = false;
 let castleExists = false;
 let disabledTooltips = document.getElementById('disableTooltips')?.checked || false;
 let firstHousePlaced = false;
+
+// Update the isMobile detection
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                 window.innerWidth < 768;
+				 
+				 // Add this early in your initialization
+if (isMobile) {
+    document.body.classList.add('mobile');
+    // Simplify 3D effects for mobile
+    document.querySelector('.grid-3d').style.transform = 'rotateX(50deg) rotateZ(45deg) translateZ(-300px) translateY(-30px) scale(2)';
+}
+
 const instructions = [
 	{
 		title: "Good Job!",
@@ -247,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const villagers = new Map();
     let movementCheckInterval;
     updateVillagerCounter();
-	//setupResponsiveGrid();
+	setupResponsiveGrid();
     
     document.addEventListener('DOMContentLoaded', function() {
 		// Initialize UI
@@ -418,49 +430,48 @@ function updateVillagerCounter() {
         }
     }
 	
-	function setupResponsiveGrid() {
-		const sceneContainer = document.getElementById('sceneContainer');
-		const grid3d = document.getElementById('grid3d');
-		
-		function updateGridSize() {
-			// Get viewport width
-			const viewportWidth = Math.min(window.innerWidth, window.document.documentElement.clientWidth);
-			
-			// Calculate appropriate size for mobile
-			const isMobile = viewportWidth < 768; // Adjust breakpoint as needed
-			const containerSize = isMobile ? viewportWidth * 0.9 : 600; // 90% of viewport on mobile
-			
-			// Apply size to container
-			sceneContainer.style.width = `${containerSize}px`;
-			sceneContainer.style.height = `${containerSize}px`;
-			
-			// Update cell sizes
-			const cells = document.querySelectorAll('.cell');
-			const cellSize = containerSize / size; // size is your grid dimension (5 or 6)
-			
-			cells.forEach(cell => {
-				cell.style.width = `${cellSize}px`;
-				cell.style.height = `${cellSize}px`;
-				
-				// Update cell faces if needed
-				const faces = cell.querySelectorAll('.cell-face');
-				faces.forEach(face => {
-					face.style.width = `${cellSize}px`;
-					face.style.height = `${cellSize}px`;
-				});
-			});
-			
-			// Adjust 3D transform scale based on container size
-			const scaleFactor = containerSize / 600 * 3.6; // Base scale is 3.6 for 600px container
-			grid3d.style.transform = `rotateX(50deg) rotateZ(45deg) translateZ(-950px) translateY(-30px) scale(${scaleFactor})`;
-		}
-		
-		// Initial setup
-		updateGridSize();
-		
-		// Update on window resize
-		window.addEventListener('resize', updateGridSize);
-	}
+function setupResponsiveGrid() {
+    const sceneContainer = document.getElementById('sceneContainer');
+    const grid3d = document.getElementById('grid3d');
+    
+    function updateGridSize() {
+        if (isMobile) {
+            // Mobile layout - use viewport width for sizing
+            const containerSize = Math.min(window.innerWidth, window.document.documentElement.clientWidth);
+            
+            sceneContainer.style.width = `${containerSize}px`;
+            sceneContainer.style.height = `${containerSize}px`;
+            
+            // Cells will size automatically via CSS grid
+        } else {
+            // Desktop layout (existing code)
+            const containerSize = 600;
+            const cellSize = containerSize / size;
+            
+            sceneContainer.style.width = `${containerSize}px`;
+            sceneContainer.style.height = `${containerSize}px`;
+            
+            cells.forEach(cell => {
+                cell.style.width = `${cellSize}px`;
+                cell.style.height = `${cellSize}px`;
+                
+                const faces = cell.querySelectorAll('.cell-front');
+                faces.forEach(face => {
+                    face.style.width = `${cellSize}px`;
+                    face.style.height = `${cellSize}px`;
+                });
+            });
+            
+            grid3d.style.transform = `rotateX(50deg) rotateZ(45deg) translateZ(-950px) translateY(-30px) scale(3.6)`;
+        }
+    }
+    
+    // Initial setup
+    updateGridSize();
+    
+    // Update on window resize
+    window.addEventListener('resize', updateGridSize);
+}
 
     function createCounterSparkles() {
         const counter = document.querySelector('.villager-counter');
@@ -1016,12 +1027,6 @@ function moveEntity(entity, path, type) {
                 villagersReached[houseType]++;  
                 villagersRemaining--;
                 updateVillagerCounter();
-                
-
-                
-                if (villagersRemaining <= 0) {
-                    checkVictory();  
-                }
             }  
             
             entity.style.transition = 'none';  
@@ -1044,6 +1049,10 @@ function moveEntity(entity, path, type) {
         setTimeout(moveNext, moveSpeed);  
     };  
     
+	if (villagersRemaining <= 0) {
+		checkVictory();  
+	}
+	
     setTimeout(moveNext, 50);  
 }   
 
@@ -1559,14 +1568,27 @@ function updateHighlightsForAllHouses() {
         setTimeout(() => container.remove(), 2500);
     }
     
-    function createCell(index, row, col) {
-        const cell = document.createElement('div');
-        cell.className = 'cell empty';
-        cell.dataset.index = index;
-        cell.dataset.state = 'empty';
-        cell.dataset.row = row;
-        cell.dataset.col = col;
+    // Modify grid creation for mobile
+function createCell(index, row, col) {
+    const cell = document.createElement('div');
+    cell.className = 'cell empty';
+    cell.dataset.index = index;
+    cell.dataset.state = 'empty';
+    cell.dataset.row = row;
+    cell.dataset.col = col;
+    
+    if (isMobile) {
+        // Mobile - simple front face only
+        const faceElement = document.createElement('div');
+        faceElement.className = 'cell-front';
+        faceElement.addEventListener('click', handleCellClick);
+        faceElement.dataset.index = index;
+        cell.appendChild(faceElement);
         
+        // Also add click handler to the cell itself for better mobile touch handling
+        cell.addEventListener('click', handleCellClick);
+    } else {
+        // Desktop - 3D faces
         ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(face => {
             const faceElement = document.createElement('div');
             faceElement.className = `cell-face cell-${face}`;
@@ -1575,27 +1597,30 @@ function updateHighlightsForAllHouses() {
             if (face === 'front') {
                 faceElement.addEventListener('click', handleCellClick);
                 faceElement.dataset.index = index;
-				// Set initial background to prevent flash of unstyled content
-                faceElement.style.backgroundImage = 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'none\' stroke=\'%23ccc\' stroke-width=\'1\' stroke-dasharray=\'5,5\'/></svg>")';
             }
         });
-        
-        const center = (size-1)/2;
-        const x = (col - center) * spacing;
-        const y = (row - center) * spacing;
-        
-        cell.style.opacity = '0';
-        cell.style.transition = 'transform 0.5s ease-out';
-        
-        setTimeout(() => {
-            cell.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-            cell.style.opacity = '1';
-        }, 1 * index);
-        
-        grid3d.appendChild(cell);
-        cells[index] = cell;
-        return cell;
     }
+    
+    const center = (size-1)/2;
+    const x = (col - center) * spacing;
+    const y = (row - center) * spacing;
+    
+    cell.style.opacity = '0';
+    cell.style.transition = 'transform 0.5s ease-out';
+    
+    setTimeout(() => {
+        if (isMobile) {
+            cell.style.transform = `translate(${x}px, ${y}px)`;
+        } else {
+            cell.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        }
+        cell.style.opacity = '1';
+    }, 1 * index);
+    
+    grid3d.appendChild(cell);
+    cells[index] = cell;
+    return cell;
+}
     
     for (let row = 0; row < size; row++) {
         for (let col = 0; col < size; col++) {
@@ -1629,10 +1654,99 @@ function updateHighlightsForAllHouses() {
     sceneContainer.addEventListener('contextmenu', e => e.preventDefault());
     
     function expandGrid() {
-        const oldSize = size;
-        size = 6;
-        const newCells = [];
+    const oldSize = 5;
+    size = 6;
+    
+    if (isMobile) {
+        // Mobile-specific expansion
+        grid3d.classList.add('expanded');
         
+        // 1. Save all existing cell states with their correct positions
+        const cellStates = [];
+        for (let i = 0; i < cells.length; i++) {
+            if (cells[i]) {
+                cellStates.push({
+                    row: parseInt(cells[i].dataset.row),
+                    col: parseInt(cells[i].dataset.col),
+                    className: cells[i].className,
+                    state: cells[i].dataset.state
+                });
+            }
+        }
+        
+        // 2. Clear the grid completely
+        grid3d.innerHTML = '';
+        cells = new Array(size * size);
+        
+        // 3. Create all new cells in their correct positions
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const index = row * size + col;
+                
+                // Check if this was an original cell position
+                const originalCell = cellStates.find(c => c.row === row && c.col === col);
+                
+                if (originalCell) {
+                    // Recreate original cell
+                    cells[index] = createCell(index, row, col);
+                    cells[index].className = originalCell.className;
+                    cells[index].dataset.state = originalCell.state;
+                } else if (row === oldSize || col === oldSize) {
+                    // Create new forest cells only in the expansion areas
+                    cells[index] = createCell(index, row, col);
+                    cells[index].className = 'cell forest';
+                    cells[index].dataset.state = 'forest';
+                } else {
+                    // Create empty cells for other positions
+                    cells[index] = createCell(index, row, col);
+                    cells[index].className = 'cell empty';
+                    cells[index].dataset.state = 'empty';
+                }
+            }
+        }
+        
+        // 4. Position all cells correctly in the grid
+        const center = (size-1)/2;
+        for (let row = 0; row < size; row++) {
+            for (let col = 0; col < size; col++) {
+                const index = row * size + col;
+                if (cells[index]) {
+                    const x = (col - center) * (100 / size * 1.2);
+                    const y = (row - center) * (100 / size * 1.2);
+                    cells[index].style.transform = `translate(${x}%, ${y}%)`;
+                    
+                    // Update data attributes to ensure consistency
+                    cells[index].dataset.row = row;
+                    cells[index].dataset.col = col;
+                    cells[index].dataset.index = index;
+                }
+            }
+        }
+        
+        // 5. Adjust container size
+        sceneContainer.style.paddingTop = `10%`;
+        
+        // 6. Show house tools with delay
+        setTimeout(() => {
+            const houseTools = document.querySelectorAll('.house-tool');
+            houseTools.forEach((tool, index) => {
+                setTimeout(() => {
+                    tool.classList.add('show');
+                    tool.style.visibility = 'visible';
+                }, index * 300);
+            });
+            
+            const bellSound = document.getElementById('bellSound1');
+            bellSound.currentTime = 0;
+            bellSound.volume = 0.3;
+            bellSound.play();
+        }, 500);
+        
+        updateHighlightsForAllHouses();
+        return;
+    }
+		
+        const newCells = [];
         sceneContainer.style.width = `${size * spacing}px`;
         sceneContainer.style.height = `${size * spacing}px`;
         
@@ -1701,11 +1815,24 @@ function updateHighlightsForAllHouses() {
     }
     
 function handleCellClick(e) {
-    if (e.button === 0) {
-        const clickedFace = e.currentTarget;
-        const index = parseInt(clickedFace.dataset.index);
+	// Prevent double-tap zoom on mobile
+    if (isMobile) {
+        e.preventDefault();
+    }
+    
+    let clickedElement = e.currentTarget;
+    let index;
+    
+    // For mobile, we might get the cell or the face element
+    if (clickedElement.classList.contains('cell')) {
+        index = parseInt(clickedElement.dataset.index);
+    } else {
+        index = parseInt(clickedElement.dataset.index);
+        clickedElement = cells[index];
+    }
+    
         const clickedCell = cells[index];
-        lastClickedIndex = index;
+		lastClickedIndex = index;
         
         clickedCell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
         
@@ -1781,7 +1908,7 @@ function handleCellClick(e) {
         }
         
         updateHighlightsForAllHouses();
-    }
+    
 }
     
     function checkAdjacentCells(index) {
@@ -2410,3 +2537,25 @@ setTimeout(() => {
     setInterval(checkInstructionTriggers, 1000);
 }, 2000);
 
+
+// Add this to your script.js
+if (isMobile) {
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        let tapTimer;
+        
+        btn.addEventListener('touchstart', () => {
+            tapTimer = setTimeout(() => {
+                btn.querySelector('.tool-cost').style.display = 'flex';
+            }, 500); // Show after long press
+        });
+        
+        btn.addEventListener('touchend', () => {
+            clearTimeout(tapTimer);
+        });
+        
+        btn.addEventListener('touchmove', () => {
+            clearTimeout(tapTimer);
+            btn.querySelector('.tool-cost').style.display = 'none';
+        });
+    });
+}
