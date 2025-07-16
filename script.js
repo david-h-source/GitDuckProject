@@ -18,6 +18,14 @@ if (isMobile) {
     document.body.classList.add('mobile');
     // Simplify 3D effects for mobile
     document.querySelector('.grid-3d').style.transform = 'rotateX(50deg) rotateZ(45deg) translateZ(-300px) translateY(-30px) scale(2)';
+	// Add specific mobile event listeners
+    document.getElementById('bulldozer-tool').addEventListener('touchend', function(e) {
+        if (currentTool === 'bulldozer' && energy >= 2) {
+            // Ensure only 2 energy is deducted
+            energy -= 2;
+            updateEnergyDisplay();
+        }
+    });
 }
 
 const instructions = [
@@ -41,7 +49,12 @@ const instructions = [
         content: "Each village will replenish your energy that is displayed on the top left. Try to build two adjacent villages to see what happens!",
         trigger: () => firstVillagePlaced == true
     },
-		{
+	{
+        title: "The Bulldozer",
+        content: "You can now remove unwanted cells for 2 energy.",
+        trigger: () => firstVillagePlaced == true
+    },
+	{
         title: "The Windmill",
         content: "You can now build a windmill that costs 1 energy! This is considered as the highest tile of the grass category.",
         trigger: () => currentTool != 'dirt'
@@ -86,6 +99,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ? '<span class="space" style="--char-index:'+i+'">&nbsp;</span>'
             : '<span style="--char-index:'+i+'">'+char+'</span>'
     ).join('');
+	
+	const bulldozerTool = document.getElementById('bulldozer-tool');
+bulldozerTool.style.display = 'none';
 	
 	// Image preloading function
     function preloadImages() {
@@ -1319,28 +1335,30 @@ function wanderBoar(boar, currentIndex) {
 		        const freeTools = ['dirt', 'puddle', 'stone'];
 
        // Check energy only for non-free tools
-        if (!freeTools.includes(tool)) {
-            if ((tool === 'windmill' && energy < 1) ||
-                ((tool === 'river_house' || tool === 'farmer_house' || tool === 'blacksmith_house') && energy < 2)) {
-                tool = 'dirt'; // Default back to dirt if not enough energy
-            }
+    if (!freeTools.includes(tool)) {
+        if ((tool === 'windmill' && energy < 1) ||
+            ((tool === 'river_house' || tool === 'farmer_house' || tool === 'blacksmith_house' || tool === 'bulldozer') && energy < 2)) {
+            tool = 'dirt'; // Default back to dirt if not enough energy
         }
+    }
         
         // Update active states
-        dirtTool.classList.remove('active');
-        windmillTool.classList.remove('active');
-        riverHouseTool.classList.remove('active');
-        farmerHouseTool.classList.remove('active');
-        blacksmithHouseTool.classList.remove('active');
-        puddleTool.classList.remove('active');
-        stoneTool.classList.remove('active');
-        
-        currentTool = tool;
-        const toolElement = document.getElementById(`${tool.replace(/_/g,'-')}-tool`);
-        if (toolElement) toolElement.classList.add('active');
+    dirtTool.classList.remove('active');
+    windmillTool.classList.remove('active');
+    riverHouseTool.classList.remove('active');
+    farmerHouseTool.classList.remove('active');
+    blacksmithHouseTool.classList.remove('active');
+    puddleTool.classList.remove('active');
+    stoneTool.classList.remove('active');
+    bulldozerTool.classList.remove('active');
+    
+    currentTool = tool;
+    const toolElement = document.getElementById(`${tool.replace(/_/g,'-')}-tool`);
+    if (toolElement) toolElement.classList.add('active');
     }
     
     // Update tool event listeners
+	bulldozerTool.addEventListener('click', () => selectTool('bulldozer'));
     dirtTool.addEventListener('click', () => selectTool('dirt'));
     windmillTool.addEventListener('click', () => selectTool('windmill'));
     riverHouseTool.addEventListener('click', () => selectTool('river_house'));
@@ -1350,36 +1368,38 @@ function wanderBoar(boar, currentIndex) {
     stoneTool.addEventListener('click', () => selectTool('stone'));
     
     function updateEnergyDisplay() {
-        const energyDots = energyContainer.querySelectorAll('.energy');
-        energyDots.forEach((dot, index) => {
-            if (index < energy) {
-                dot.style.opacity = '1';
-                dot.style.animation = 'pulse-energy 8s infinite ease-in-out';
-                dot.style.animationDelay = `${index * 0.8}s`;
-            } else {
-                dot.style.animation = 'none';
-                dot.style.opacity = '0.3';
-            }
-        });
-        
-        // Update tool availability
-        windmillTool.disabled = energy < 1;
-        riverHouseTool.disabled = energy < 2;
-        farmerHouseTool.disabled = energy < 2;
-        blacksmithHouseTool.disabled = energy < 2;
-        
-        // Free tools are never disabled
-        puddleTool.disabled = false;
-        stoneTool.disabled = false;
-        
-        if ((currentTool === 'windmill' && energy < 1) ||
-            (currentTool === 'river_house' && energy < 2) ||
-            (currentTool === 'farmer_house' && energy < 2) ||
-            (currentTool === 'blacksmith_house' && energy < 2)) {
-            selectTool('dirt');
+    const energyDots = energyContainer.querySelectorAll('.energy');
+    energyDots.forEach((dot, index) => {
+        if (index < energy) {
+            dot.style.opacity = '1';
+            dot.style.animation = 'pulse-energy 8s infinite ease-in-out';
+            dot.style.animationDelay = `${index * 0.8}s`;
+        } else {
+            dot.style.animation = 'none';
+            dot.style.opacity = '0.3';
         }
-        updateToolCostIndicators();
+    });
+    
+    // Update tool availability - ensure bulldozer is included
+    windmillTool.disabled = energy < 1;
+    riverHouseTool.disabled = energy < 2;
+    farmerHouseTool.disabled = energy < 2;
+    blacksmithHouseTool.disabled = energy < 2;
+    bulldozerTool.disabled = energy < 2;
+    
+    // Free tools are never disabled
+    puddleTool.disabled = false;
+    stoneTool.disabled = false;
+    
+    if ((currentTool === 'windmill' && energy < 1) ||
+        (currentTool === 'river_house' && energy < 2) ||
+        (currentTool === 'farmer_house' && energy < 2) ||
+        (currentTool === 'blacksmith_house' && energy < 2) ||
+        (currentTool === 'bulldozer' && energy < 2)) {
+        selectTool('dirt');
     }
+    updateToolCostIndicators();
+}
     
             function highlightAdjacentEmptyCells(index) {
                 const cell = cells[index];
@@ -1539,9 +1559,12 @@ function updateHighlightsForAllHouses() {
             if (level === 'village') {
 				// Show windmill tool when village is created
             windmillTool.style.display = 'block';
+			bulldozerTool.style.display = 'block';
             setTimeout(() => {
                 windmillTool.style.opacity = '1';
                 windmillTool.style.transform = 'translateY(0)';
+				bulldozerTool.style.opacity = '1';
+        bulldozerTool.style.transform = 'translateY(0)';
             }, 300);
                 setTimeout(() => {
                     energyContainer.classList.add('show');
@@ -1653,15 +1676,19 @@ function createCell(index, row, col) {
     
     sceneContainer.addEventListener('contextmenu', e => e.preventDefault());
     
-    function expandGrid() {
+function expandGrid() {
     const oldSize = 5;
     size = 6;
     
     if (isMobile) {
-        // Mobile-specific expansion
+		
+		grid3d.classList.add('expanding');
+setTimeout(() => {
+  grid3d.classList.remove('expanding');
+}, 1000);
+        // Mobile-specific expansion (unchanged)
         grid3d.classList.add('expanded');
         
-        // 1. Save all existing cell states with their correct positions
         const cellStates = [];
         for (let i = 0; i < cells.length; i++) {
             if (cells[i]) {
@@ -1674,30 +1701,23 @@ function createCell(index, row, col) {
             }
         }
         
-        // 2. Clear the grid completely
         grid3d.innerHTML = '';
         cells = new Array(size * size);
         
-        // 3. Create all new cells in their correct positions
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
                 const index = row * size + col;
-                
-                // Check if this was an original cell position
                 const originalCell = cellStates.find(c => c.row === row && c.col === col);
                 
                 if (originalCell) {
-                    // Recreate original cell
                     cells[index] = createCell(index, row, col);
                     cells[index].className = originalCell.className;
                     cells[index].dataset.state = originalCell.state;
                 } else if (row === oldSize || col === oldSize) {
-                    // Create new forest cells only in the expansion areas
                     cells[index] = createCell(index, row, col);
                     cells[index].className = 'cell forest';
                     cells[index].dataset.state = 'forest';
                 } else {
-                    // Create empty cells for other positions
                     cells[index] = createCell(index, row, col);
                     cells[index].className = 'cell empty';
                     cells[index].dataset.state = 'empty';
@@ -1705,7 +1725,6 @@ function createCell(index, row, col) {
             }
         }
         
-        // 4. Position all cells correctly in the grid
         const center = (size-1)/2;
         for (let row = 0; row < size; row++) {
             for (let col = 0; col < size; col++) {
@@ -1715,7 +1734,6 @@ function createCell(index, row, col) {
                     const y = (row - center) * (100 / size * 1.2);
                     cells[index].style.transform = `translate(${x}%, ${y}%)`;
                     
-                    // Update data attributes to ensure consistency
                     cells[index].dataset.row = row;
                     cells[index].dataset.col = col;
                     cells[index].dataset.index = index;
@@ -1723,10 +1741,8 @@ function createCell(index, row, col) {
             }
         }
         
-        // 5. Adjust container size
         sceneContainer.style.paddingTop = `10%`;
         
-        // 6. Show house tools with delay
         setTimeout(() => {
             const houseTools = document.querySelectorAll('.house-tool');
             houseTools.forEach((tool, index) => {
@@ -1745,74 +1761,111 @@ function createCell(index, row, col) {
         updateHighlightsForAllHouses();
         return;
     }
-		
-        const newCells = [];
-        sceneContainer.style.width = `${size * spacing}px`;
-        sceneContainer.style.height = `${size * spacing}px`;
-        
-        const center = (size - 1) / 2;
-        
-        for (let i = 0; i < cells.length; i++) {
-            if (cells[i]) {
-                const oldRow = Math.floor(i / oldSize);
-                const oldCol = i % oldSize;
-                
-                const newRow = oldRow;
-                const newCol = oldCol;
-                const index = newRow * size + newCol;
-                
-                const x = (newCol - center) * spacing;
-                const y = (newRow - center) * spacing;
-                cells[i].style.transform = `translate3d(${x}px, ${y}px, 0)`;
-                
-                cells[i].dataset.row = newRow;
-                cells[i].dataset.col = newCol;
-                cells[i].dataset.index = index;
-                
-                const frontFace = cells[i].querySelector('.cell-front');
-                if (frontFace) frontFace.dataset.index = index;
-                
-                newCells[index] = cells[i];
-            }
-        }
-        
-        for (let row = 0; row < size; row++) {
-            for (let col = 0; col < size; col++) {
-                const index = row * size + col;
-                if (!newCells[index]) {
-                    newCells[index] = createCell(index, row, col);
-                    newCells[index].className = `cell forest`;
-                    newCells[index].dataset.state = 'forest';
-                }
-            }
-        }
-        
-        cells = newCells;
-        
-        toolSelection.classList.add('show');
-        
-        setTimeout(() => {
-            const houseTools = document.querySelectorAll('.house-tool');
-            houseTools.forEach((tool, index) => {
-                setTimeout(() => {
-                    tool.classList.add('show');
-                    tool.style.visibility = 'visible';
-                }, index * 300);
-            });
+    
+    // Desktop expansion - fixed version
+    const newCells = new Array(size * size);
+    
+    // First, preserve all existing cells with their correct positions
+    for (let i = 0; i < cells.length; i++) {
+        if (cells[i]) {
+            const oldRow = parseInt(cells[i].dataset.row);
+            const oldCol = parseInt(cells[i].dataset.col);
+            const newIndex = oldRow * size + oldCol;
             
-            const bellSound = document.getElementById('bellSound1');
-            bellSound.currentTime = 0;
-            bellSound.volume = 0.3;
-            bellSound.play();
-        }, 500);
-        
-        updateHighlightsForAllHouses();
-        
-        const forestCells = cells.filter(cell => cell && cell.dataset.state === 'forest');
-        if (forestCells.length > 0) {
-            boarSpawnForestIndex = forestCells[Math.floor(Math.random() * forestCells.length)].dataset.index;
+            // Update the cell's data attributes
+            cells[i].dataset.row = oldRow;
+            cells[i].dataset.col = oldCol;
+            cells[i].dataset.index = newIndex;
+            
+            // Update the front face's data index
+            const frontFace = cells[i].querySelector('.cell-front');
+            if (frontFace) frontFace.dataset.index = newIndex;
+            
+            // Keep reference to the existing cell
+            newCells[newIndex] = cells[i];
         }
     }
+    
+    // Then create new forest cells for the expansion areas
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            const index = row * size + col;
+            
+            // Skip existing cells we've already preserved
+            if (newCells[index]) continue;
+            
+            // Create new forest cells only in the expansion areas (outer row/column)
+            if (row === oldSize || col === oldSize) {
+                const cell = createCell(index, row, col);
+                cell.className = 'cell forest';
+                cell.dataset.state = 'forest';
+                
+                // Ensure 3D faces are created for new cells
+                ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(face => {
+                    const faceElement = document.createElement('div');
+                    faceElement.className = `cell-face cell-${face}`;
+                    cell.appendChild(faceElement);
+                    
+                    if (face === 'front') {
+                        faceElement.addEventListener('click', handleCellClick);
+                        faceElement.dataset.index = index;
+                    }
+                });
+                
+                newCells[index] = cell;
+            }
+        }
+    }
+    
+    cells = newCells;
+    
+    // Update all cell positions with correct spacing
+    const center = (size - 1) / 2;
+    const spacing = 110;
+    
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            const index = row * size + col;
+            if (cells[index]) {
+                const x = (col - center) * spacing;
+                const y = (row - center) * spacing;
+                cells[index].style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                
+                // Ensure data attributes are correct
+                cells[index].dataset.row = row;
+                cells[index].dataset.col = col;
+                cells[index].dataset.index = index;
+            }
+        }
+    }
+    
+    // Update 3D transformations for the grid
+    grid3d.style.transform = `rotateX(45deg) rotateZ(45deg) translateZ(-950px) translateY(-30px) scale(2.5)`;
+    
+    toolSelection.classList.add('show');
+    
+    setTimeout(() => {
+        const houseTools = document.querySelectorAll('.house-tool');
+        houseTools.forEach((tool, index) => {
+            setTimeout(() => {
+                tool.classList.add('show');
+                tool.style.visibility = 'visible';
+            }, index * 300);
+        });
+        
+        const bellSound = document.getElementById('bellSound1');
+        bellSound.currentTime = 0;
+        bellSound.volume = 0.3;
+        bellSound.play();
+    }, 500);
+    
+    updateHighlightsForAllHouses();
+    
+    const forestCells = cells.filter(cell => cell && cell.dataset.state === 'forest');
+    if (forestCells.length > 0) {
+        boarSpawnForestIndex = forestCells[Math.floor(Math.random() * forestCells.length)].dataset.index;
+    }
+}
     
 function handleCellClick(e) {
 	// Prevent double-tap zoom on mobile
@@ -1907,7 +1960,29 @@ function handleCellClick(e) {
             }
         }
         
+		if (currentTool === 'bulldozer') {
+			// Prevent bulldozing forest tiles
+			if (clickedCell.dataset.state === 'forest') return;
+			
+			if (energy < 2 || clickedCell.dataset.state === 'empty') return;
+			
+			energy -= 2; // This was correct, the issue might be elsewhere
+			clickedCell.className = 'cell empty';
+			clickedCell.dataset.state = 'empty';
+			updateEnergyDisplay();
+			
+			// Play sound
+			const dirtSound = document.getElementById('dirtSound');
+			dirtSound.currentTime = 0;
+			dirtSound.play();
+			
+			// Update highlights
+			updateHighlightsForAllHouses();
+			return;
+		}
+		
         updateHighlightsForAllHouses();
+		
     
 }
     
@@ -2503,10 +2578,12 @@ function createInstructionBubble(title, content) {
     `;
     
     const closeBtn = bubble.querySelector('.close-bubble');
-    closeBtn.addEventListener('click', () => {
-        bubble.style.opacity = '0';
-        setTimeout(() => bubble.remove(), 500);
-    });
+
+	
+	closeBtn.addEventListener('click', () => {
+  bubble.classList.add('closing');
+  setTimeout(() => bubble.remove(), 500);
+});
     
     document.getElementById('instructionContainer').appendChild(bubble);
     

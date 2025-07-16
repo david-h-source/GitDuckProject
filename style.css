@@ -933,10 +933,20 @@ h1 {
     position: relative;
     opacity: 0;
     transform: translateX(20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+	transition: opacity 0.5s ease, transform 0.5s ease, height 0.3s ease, padding 0.3s ease;
     font-family: 'Comic Neue', cursive;
     color: #333;
-	font-size:20px
+	font-size:20px;
+	overflow: hidden;
+}
+
+.instruction-bubble.closing {
+  opacity: 0 !important;
+  transform: translateX(20px) !important;
+  height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin: 0 !important;
 }
 
 .disable-tooltips .instruction-bubble {
@@ -989,6 +999,11 @@ h1 {
     border-right: 10px solid rgba(255, 255, 255, 0.9);
 }
 
+#bulldozer-tool { 
+    background-image: url('bulldozer.png');
+    background-size: cover;
+}
+
 @media (max-width: 768px) {
     .scene-container {
         width: 100vw;
@@ -1017,7 +1032,6 @@ h1 {
         grid-template-columns: repeat(6, 1fr);
         grid-template-rows: repeat(6, 1fr);
         gap: 1px;
-        transform: scale(0.9) !important;
     }
     
     .cell {
@@ -1062,7 +1076,7 @@ h1 {
         justify-content: center;
         gap: 10px;
         padding: 10px;
-        background: rgba(0,0,0,0.7);
+        background: rgba(0,0,0,0.2);
     }
 	
 	.settings-toggle {
@@ -1150,4 +1164,24 @@ h1 {
         width: 15% !important;
         height: 15% !important;    
     }
+	
+	@keyframes gridExpand {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.grid-3d.expanding {
+  animation: gridExpand 1s ease-out;
+}
+
 }
