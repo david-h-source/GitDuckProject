@@ -18,14 +18,6 @@ if (isMobile) {
     document.body.classList.add('mobile');
     // Simplify 3D effects for mobile
     document.querySelector('.grid-3d').style.transform = 'rotateX(50deg) rotateZ(45deg) translateZ(-300px) translateY(-30px) scale(2)';
-	// Add specific mobile event listeners
-    document.getElementById('bulldozer-tool').addEventListener('touchend', function(e) {
-        if (currentTool === 'bulldozer' && energy >= 2) {
-            // Ensure only 2 energy is deducted
-            energy -= 2;
-            updateEnergyDisplay();
-        }
-    });
 }
 
 const instructions = [
@@ -1358,7 +1350,15 @@ function wanderBoar(boar, currentIndex) {
     }
     
     // Update tool event listeners
-	bulldozerTool.addEventListener('click', () => selectTool('bulldozer'));
+	if (!isMobile) {
+		bulldozerTool.addEventListener('click', () => selectTool('bulldozer'));
+	} else {
+		// For mobile, use touch events but ensure they don't duplicate
+		bulldozerTool.addEventListener('touchend', (e) => {
+			e.preventDefault();
+			selectTool('bulldozer');
+		});
+	}
     dirtTool.addEventListener('click', () => selectTool('dirt'));
     windmillTool.addEventListener('click', () => selectTool('windmill'));
     riverHouseTool.addEventListener('click', () => selectTool('river_house'));
@@ -1868,14 +1868,14 @@ setTimeout(() => {
 }
     
 function handleCellClick(e) {
-	// Prevent double-tap zoom on mobile
+    // Prevent double-tap zoom on mobile
     if (isMobile) {
         e.preventDefault();
     }
-    
+
     let clickedElement = e.currentTarget;
     let index;
-    
+
     // For mobile, we might get the cell or the face element
     if (clickedElement.classList.contains('cell')) {
         index = parseInt(clickedElement.dataset.index);
@@ -1883,107 +1883,102 @@ function handleCellClick(e) {
         index = parseInt(clickedElement.dataset.index);
         clickedElement = cells[index];
     }
-    
-        const clickedCell = cells[index];
-		lastClickedIndex = index;
+
+    const clickedCell = cells[index];
+    lastClickedIndex = index;
+
+    clickedCell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
+
+    // Handle bulldozer tool first since it has different rules
+    if (currentTool === 'bulldozer') {
+		const bulldozerSound = document.getElementById('bulldozerSound');
+        bulldozerSound.currentTime = 0;
+        bulldozerSound.play();
+        handleBulldozerAction(clickedCell);
+        return;
+    }
+
+    // Handle other tools only on empty cells
+    if (clickedCell.dataset.state === 'empty') {
+        const { cellClass, cost } = getToolProperties(currentTool);
         
-        clickedCell.classList.remove('highlight-blacksmith', 'highlight-river', 'highlight-farmer');
+        // Check if we can afford this action
+        if (energy < cost) return;
         
-        if (currentTool === 'dirt' && clickedCell.dataset.state === 'empty') {
+        // Play sound for dirt placement
+        if (currentTool === 'dirt') {
             const dirtSound = document.getElementById('dirtSound');
             dirtSound.currentTime = 0;
             dirtSound.play();
         }
-        
-        if (clickedCell.dataset.state === 'empty') {
-            let cellClass, cost;
-            switch(currentTool) {
-                case 'windmill':  // Added windmill case
-                    if (energy < 1) return;
-                    cellClass = 'windmill';
-                    cost = 1;
-                    break;
-                case 'stone':
-                    cellClass = 'stone';
-                    cost = 0;
-                    break;
-                case 'puddle':
-                    cellClass = 'puddle';
-                    cost = 0;
-                    break;
-                case 'river_house':
-                    if (energy < 2) return;
-                    cellClass = 'river_house';
-                    cost = 2;
-                    break;
-                case 'farmer_house':
-                    if (energy < 2) return;
-                    cellClass = 'farmer_house';
-                    cost = 2;
-                    break;
-                case 'blacksmith_house':
-                    if (energy < 2) return;
-                    cellClass = 'blacksmith_house';
-                    cost = 2;
-                    break;
-                default:
-                    cellClass = 'dirt';
-                    cost = 0;
-            }
-            
-            energy -= cost;
-            clickedCell.className = `cell ${cellClass}`;
-            clickedCell.dataset.state = cellClass;
-            createSparkles(clickedCell, cellClass);
-            updateEnergyDisplay();
-            
-            if (['river_house', 'farmer_house', 'blacksmith_house'].includes(cellClass)) {
-                setTimeout(() => {
-                    const villagerCounter = document.querySelector('.villager-counter');
-                    if (!villagerCounter.classList.contains('show')) {
-                        villagerCounter.classList.add('show');
-                    }
-                }, 300);
-            }
-            
-            if (['blacksmith_house', 'river_house', 'farmer_house'].includes(cellClass)) {
-                highlightAdjacentEmptyCells(index);
-            }
-			setTimeout(() => {
-                checkAdjacentCells(index);
-                updateHighlightsForAllHouses(); // Update highlights after placement
-            }, 10);
-            
-            
-            if (['river_house', 'farmer_house', 'blacksmith_house', 'castle'].includes(cellClass)) {
-                setTimeout(() => checkVillagerMovementConditions(), 100);
-            }
+
+        // Apply the change
+        energy -= cost;
+        clickedCell.className = `cell ${cellClass}`;
+        clickedCell.dataset.state = cellClass;
+        createSparkles(clickedCell, cellClass);
+        updateEnergyDisplay();
+
+        // Special handling for house types
+        if (['river_house', 'farmer_house', 'blacksmith_house'].includes(cellClass)) {
+            setTimeout(() => {
+                const villagerCounter = document.querySelector('.villager-counter');
+                if (!villagerCounter.classList.contains('show')) {
+                    villagerCounter.classList.add('show');
+                }
+            }, 300);
         }
-        
-		if (currentTool === 'bulldozer') {
-			// Prevent bulldozing forest tiles
-			if (clickedCell.dataset.state === 'forest') return;
-			
-			if (energy < 2 || clickedCell.dataset.state === 'empty') return;
-			
-			energy -= 2; // This was correct, the issue might be elsewhere
-			clickedCell.className = 'cell empty';
-			clickedCell.dataset.state = 'empty';
-			updateEnergyDisplay();
-			
-			// Play sound
-			const dirtSound = document.getElementById('dirtSound');
-			dirtSound.currentTime = 0;
-			dirtSound.play();
-			
-			// Update highlights
-			updateHighlightsForAllHouses();
-			return;
-		}
-		
-        updateHighlightsForAllHouses();
-		
-    
+
+        if (['blacksmith_house', 'river_house', 'farmer_house'].includes(cellClass)) {
+            highlightAdjacentEmptyCells(index);
+        }
+
+        setTimeout(() => {
+            checkAdjacentCells(index);
+            updateHighlightsForAllHouses();
+        }, 10);
+
+        if (['river_house', 'farmer_house', 'blacksmith_house', 'castle'].includes(cellClass)) {
+            setTimeout(() => checkVillagerMovementConditions(), 100);
+        }
+    }
+}
+
+function handleBulldozerAction(clickedCell) {
+    // Prevent bulldozing empty cells or forest tiles
+    if (clickedCell.dataset.state === 'empty' || clickedCell.dataset.state === 'forest') {
+        return;
+    }
+
+    // Check energy cost
+    if (energy < 2) return;
+
+    energy -= 2;
+    clickedCell.className = 'cell empty';
+    clickedCell.dataset.state = 'empty';
+    updateEnergyDisplay();
+
+    // Play sound
+    const dirtSound = document.getElementById('dirtSound');
+    dirtSound.currentTime = 0;
+    dirtSound.play();
+
+    // Update highlights
+    updateHighlightsForAllHouses();
+}
+
+function getToolProperties(tool) {
+    const properties = {
+        dirt: { cellClass: 'dirt', cost: 0 },
+        windmill: { cellClass: 'windmill', cost: 1 },
+        stone: { cellClass: 'stone', cost: 0 },
+        puddle: { cellClass: 'puddle', cost: 0 },
+        river_house: { cellClass: 'river_house', cost: 2 },
+        farmer_house: { cellClass: 'farmer_house', cost: 2 },
+        blacksmith_house: { cellClass: 'blacksmith_house', cost: 2 }
+    };
+
+    return properties[tool] || { cellClass: 'dirt', cost: 0 };
 }
     
     function checkAdjacentCells(index) {
