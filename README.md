@@ -1,4 +1,4 @@
-Access the game rom this code "This Precious Town" here : https://david-hoeffel.github.io/GitDuckProject/
+Access the game rom this code "This Precious Town" here : https://david-h-source.github.io/GitDuckProject/
 
 Inspired by Ishisoft's "This Precious Land", I made a cell combining game where you have to bring all villagers to the castle.
 Turn the volume up, and enjoy !
