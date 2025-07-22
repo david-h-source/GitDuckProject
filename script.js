@@ -175,9 +175,9 @@ bulldozerTool.style.display = 'none';
     let energy = 5;
     
     const maxVillagersPerHouse = {
-        farmer: 34,
-        river: 33,
-        blacksmith: 33
+        farmer: 35,
+        river: 35,
+        blacksmith: 35
     };
     let spawnedVillagers = {
         farmer: 0,
@@ -187,7 +187,7 @@ bulldozerTool.style.display = 'none';
     
     let boarMovementCount = 0;
     const ambientSound = document.getElementById('ambientSound');
-    ambientSound.volume = 0.5;
+    ambientSound.volume = 1;
     //ambientSound.play().catch(e => console.log("Audio play failed:", e));
     
     // Camera controls
@@ -717,10 +717,7 @@ function removeHighlightsAroundHouse(index) {
 
     
     function checkVictory() {
-        if (villagersRemaining <= 0 && 
-            spawnedVillagers.farmer >= maxVillagersPerHouse.farmer && 
-            spawnedVillagers.river >= maxVillagersPerHouse.river && 
-            spawnedVillagers.blacksmith >= maxVillagersPerHouse.blacksmith) {
+        if (villagersRemaining <= 0) {
             
             clearInterval(movementCheckInterval);
             clearInterval(boarInterval);
